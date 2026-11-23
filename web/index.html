@@ -19,7 +19,7 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.6 "IBM Plex Sa
 header{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;padding:28px max(4vw,16px) 18px}
 h1{margin:0;font-weight:600;font-size:56px;line-height:.9;letter-spacing:-.04em}
 header p{margin:0 0 4px;color:var(--mute)}
-.stage{display:grid;grid-template-columns:minmax(0,1fr) 500px;gap:0;margin:0 max(4vw,16px);border-radius:28px;overflow:hidden;background:var(--stage)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 580px;gap:0;margin:0 max(4vw,16px);border-radius:28px;overflow:hidden;background:var(--stage)}
 .view{position:relative;min-height:min(72vh,720px);background:radial-gradient(ellipse 60% 38% at 46% 82%,var(--floor),transparent 70%)}
 .view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 .view canvas:active{cursor:grabbing}
@@ -29,8 +29,13 @@ header p{margin:0 0 4px;color:var(--mute)}
 .state.on{color:var(--ink)}
 .hint{position:absolute;left:28px;bottom:22px;color:var(--mute);font-size:13px}
 .side{display:flex;align-items:center;padding:24px 24px 24px 0}
-.laptop{width:100%;background:var(--bezel);border-radius:14px;padding:8px}
-.scr{display:grid;grid-template-columns:136px minmax(0,1fr);height:460px;border-radius:7px;background:var(--glass);overflow:hidden}
+.laptop{width:100%;padding:0 4%}
+.lid{position:relative;background:var(--bezel);border-radius:18px 18px 6px 6px;padding:20px 12px 14px;box-shadow:inset 0 0 0 1px #34322d}
+.lid::before{content:"";position:absolute;top:8px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#2c2b28;box-shadow:inset 0 0 0 1px #45433d}
+.base{position:relative;height:14px;margin:0 -7%;border-radius:2px 2px 14px 14px/2px 2px 12px 12px;background:linear-gradient(#55534d,#2d2c29 45%,#1b1a18);box-shadow:0 18px 28px -14px #000}
+.base::before{content:"";position:absolute;top:0;left:50%;width:16%;height:5px;transform:translateX(-50%);border-radius:0 0 7px 7px;background:#1f1e1b}
+.scr{display:grid;grid-template-columns:136px minmax(0,1fr);aspect-ratio:16/10.4;border-radius:4px;background:var(--glass);overflow:hidden}
+.scr.wide{grid-template-columns:0 minmax(0,1fr)}.scr.wide .nav{visibility:hidden;padding:0;border:0}
 .nav{border-right:1px solid var(--line);padding:12px 8px;overflow:auto;font-size:12px}
 .nav h4{margin:0 6px 6px;font-size:11px;font-weight:500;color:var(--mute)}
 .pj{display:flex;justify-content:space-between;gap:4px;padding:6px 8px;border-radius:8px;color:var(--mute)}
@@ -89,7 +94,7 @@ button:disabled{color:var(--mute);opacity:.45;cursor:default}
 button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 #bReset{border-color:transparent;color:var(--mute)}
 .note{padding:4px max(4vw,16px) 28px;color:var(--mute);font-size:12px}
-@media(max-width:960px){.stage{grid-template-columns:minmax(0,1fr)}.scr{grid-template-columns:110px minmax(0,1fr)}.side{padding:0 16px 16px}.view{min-height:56vh}.scr{height:360px}h1{font-size:44px}#bReset{margin-left:0}}
+@media(max-width:960px){.stage{grid-template-columns:minmax(0,1fr)}.scr{grid-template-columns:110px minmax(0,1fr)}.side{padding:0 16px 16px}.view{min-height:56vh}h1{font-size:44px}#bReset{margin-left:0}}
 @media(prefers-reduced-motion:reduce){.typing b{animation:none}.state i{transition:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
@@ -98,12 +103,12 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 <header><h1>knot</h1><p>줄을 묶어 AI 프로젝트를 끝내는 디바이스</p></header>
 <main class="stage">
   <div class="view" id="view"><canvas id="c" aria-label="knot 디바이스 3D 모델"></canvas><div class="state" id="led"><i></i><span>대기 중</span></div><div class="hint">드래그해서 돌려보기, 스크롤해서 확대</div></div>
-  <div class="side"><div class="laptop"><div class="scr">
+  <div class="side"><div class="laptop"><div class="lid"><div class="scr" id="scr">
     <aside class="nav"><div id="projs"></div><div id="sess"></div></aside>
     <section class="main"><div class="bar"><span class="pill" id="pill">카드 없음</span><span class="name" id="pname"></span></div>
     <div class="sub" id="st">카드를 꽂으면 그 프로젝트 폴더가 열려요</div>
     <div class="body" id="body"><div class="empty">슬롯에 카드를 꽂아 주세요</div></div></section>
-  </div></div></div>
+  </div></div><div class="base"></div></div></div>
 </main>
 <p class="cap" id="cap" aria-live="polite"></p>
 <nav class="controls" aria-label="디바이스 동작">
@@ -240,45 +245,49 @@ function drawChat(typing){
   body.innerHTML=h;body.scrollTop=body.scrollHeight;
 }
 function drawGraph(p){
-  const evs=G.log.filter(e=>e.p===p);
-  const lanes={},nodes=[];let lane=0;
-  nodes.push({lane:0,label:DATA[p].name,sub:'카드를 꽂아 시작',kind:'root'});
-  for(const e of evs){
-    const x=sess(e.id);
-    if(!(e.id in lanes)){lanes[e.id]=x.parent?++lane:0;}
-    const L=lanes[e.id];
-    if(e.t==='start')nodes.push({lane:L,label:x.title,sub:x.parent?`${sess(x.parent).title}에서 갈라짐`:'첫 세션',kind:'start',id:e.id,from:x.parent});
-    else nodes.push({lane:L,label:x.decision,sub:'결정',kind:'dec',id:e.id});
-  }
-  if(G.ended===p){const last=evs.filter(e=>!G.ss[e.id].dead).pop();nodes.push({lane:last?lanes[last.id]:0,label:'줄을 묶어서 끝냄',sub:'카드에 구멍이 뚫림',kind:'end'});}
-  const nl=lane+1;
+  const evs=G.log.filter(e=>e.p===p),dead=id=>!!(id&&G.ss[id].dead);
+  const root={label:DATA[p].name,sub:'카드를 꽂음',kind:'root',kids:[]},by={};
+  for(const e of evs){const x=sess(e.id);
+    if(e.t==='start'){const n={label:x.title,kind:'s',id:e.id,kids:[]};by[e.id]=n;(x.parent?by[x.parent]:root).kids.push(n);}
+    else by[e.id].dec=x.decision;}
+  if(G.ended===p){const last=evs.filter(e=>!dead(e.id)).pop();(last?by[last.id]:root).kids.push({label:'줄을 묶어서 끝냄',sub:'카드에 구멍이 뚫림',kind:'end',kids:[]});}
+  // 살아 있는 갈래가 줄기, 버린 갈래는 위아래로 번갈아 뻗음
+  const all=[];let side=0;
+  const place=(n,d,row)=>{n.d=d;n.row=row;all.push(n);
+    const main=[...n.kids].reverse().find(k=>!dead(k.id))||null;
+    for(const k of n.kids){if(k===main)continue;side++;place(k,d+1,row+(side%2?1:-1)*Math.ceil(side/2));}
+    if(main)place(main,d+1,row);};
+  place(root,0,0);
+  const maxD=Math.max(...all.map(n=>n.d)),minR=Math.min(...all.map(n=>n.row)),maxR=Math.max(...all.map(n=>n.row));
   body.innerHTML='<div class="graph"><svg id="gsv"></svg></div>';
   const sv=$('gsv');
+  const wrap=(t,n)=>{const w=t.split(' '),o=[];let c='';for(const k of w){if(c&&(c+' '+k).length>n){o.push(c);c=k;}else c=c?c+' '+k:k;}if(c)o.push(c);return o;};
   const draw=()=>{
-    const W=sv.clientWidth,H=sv.clientHeight,rh=Math.min(46,(H-20)/nodes.length),lx=i=>12+i*24,tx=12+nl*24+8,y=i=>16+i*rh;
-    const dead=id=>id&&G.ss[id].dead;
-    let e='',n='';
-    const lastIn={};
-    nodes.forEach((d,i)=>{
-      const col=dead(d.id)?'var(--mute)':'var(--amber)',dash=dead(d.id)?' stroke-dasharray="3 3"':'';
-      let pi=null;
-      if(d.kind==='start'&&d.from){pi=nodes.findIndex(q=>q.kind==='dec'&&q.id===d.from);}
-      else if(d.kind!=='root'){pi=lastIn[d.lane]??0;}
-      if(pi!==null){const a=nodes[pi];const x1=lx(a.lane),y1=y(pi),x2=lx(d.lane),y2=y(i);
-        e+=x1===x2?`<path d="M${x1} ${y1}V${y2}" style="stroke:${col}" stroke-width="2"${dash} fill="none"/>`:`<path d="M${x1} ${y1}C${x1} ${y1+rh*0.8},${x2} ${y2-rh*0.8},${x2} ${y2}" style="stroke:${col}" stroke-width="2"${dash} fill="none"/>`;}
-      lastIn[d.lane]=i;
-      const cx=lx(d.lane),cy=y(i);
-      n+=d.kind==='dec'?`<rect x="${cx-5}" y="${cy-5}" width="10" height="10" transform="rotate(45 ${cx} ${cy})" style="fill:${col}"/>`
-        :d.kind==='end'?`<rect x="${cx-8}" y="${cy-3.5}" width="16" height="7" rx="3.5" style="fill:var(--ink)"/>`
-        :`<circle cx="${cx}" cy="${cy}" r="${d.kind==='root'?6:4.5}" style="fill:${d.kind==='root'?'var(--ink)':'var(--glass)'};stroke:${col}" stroke-width="2"/>`;
-      n+=`<text x="${tx}" y="${cy-1}" font-size="12.5" style="fill:${dead(d.id)?'var(--mute)':'var(--ink)'}" ${dead(d.id)?'text-decoration="line-through"':''}>${d.label}</text><text x="${tx}" y="${cy+13}" font-size="10.5" style="fill:var(--mute)">${d.sub}</text>`;
-      if(d.kind==='dec'&&dead(d.id))n+=`<text x="${cx+9}" y="${cy+4}" font-size="11" style="fill:var(--mute)">×</text>`;
-    });
-    sv.innerHTML=e+n;
+    const W=sv.clientWidth,H=sv.clientHeight,cw=(W-40)/(maxD+0.75),X=n=>16+n.d*cw;
+    const rows=maxR-minR,rh=rows?Math.min(120,(H-90)/rows):0,top=rows?Math.max(30,(H-rows*rh-60)/2):H*0.32,Y=n=>top+(n.row-minR)*rh;
+    const fs=12,mc=Math.max(4,Math.floor((cw*0.6)/(fs*0.95)));
+    let e='',t='';
+    const walk=n=>{for(const k of n.kids){const x1=X(n),y1=Y(n),x2=X(k),y2=Y(k),dk=dead(k.id),col=dk?'var(--mute)':'var(--amber)',dash=dk?' stroke-dasharray="4 4"':'';
+        e+=y1===y2?`<path d="M${x1} ${y1}H${x2}" style="stroke:${col}" stroke-width="2.5"${dash} fill="none"/>`
+          :`<path d="M${x1+cw*0.66} ${y1}C${x1+cw*0.9} ${y1},${x1+cw*0.8} ${y2},${x2} ${y2}" style="stroke:${col}" stroke-width="2"${dash} fill="none"/>`;
+        walk(k);}};
+    walk(root);
+    for(const n of all){const cx=X(n),cy=Y(n),dn=dead(n.id),col=dn?'var(--mute)':'var(--amber)',tc=dn?'var(--mute)':'var(--ink)',lt=dn?'text-decoration="line-through"':'';
+      t+=n.kind==='end'?`<rect x="${cx-11}" y="${cy-5}" width="22" height="10" rx="5" style="fill:var(--ink)"/>`
+        :n.kind==='root'?`<circle cx="${cx}" cy="${cy}" r="7" style="fill:var(--ink)"/>`
+        :n.dec?`<rect x="${cx-6.5}" y="${cy-6.5}" width="13" height="13" transform="rotate(45 ${cx} ${cy})" style="fill:${col}"/>`
+        :`<circle cx="${cx}" cy="${cy}" r="5.5" style="fill:var(--glass);stroke:${col}" stroke-width="2"/>`;
+      t+=`<text x="${cx-6}" y="${cy-14}" font-size="${fs}" font-weight="500" style="fill:${tc}" ${lt}>${n.label}</text>`;
+      const sub=n.dec||n.sub;
+      if(sub){const L=wrap(sub,mc),c2=n.dec?(dn?'var(--mute)':'var(--amber)'):'var(--mute)';
+        t+=`<text y="${cy+24}" font-size="${n.dec?fs:10.5}" style="fill:${c2}" ${lt}>${L.map((l,i)=>`<tspan x="${cx-6}" dy="${i?fs*1.3:0}">${l}</tspan>`).join('')}</text>`;}
+      if(dn)t+=`<text x="${cx+12}" y="${cy+4}" font-size="11" style="fill:var(--mute)">버림</text>`;
+    }
+    sv.innerHTML=e+t;
   };
   draw();new ResizeObserver(draw).observe(sv);
 }
-function render(typing){drawNav();
+function render(typing){drawNav();$('scr').classList.toggle('wide',!!(G.hung&&G.view===G.ended));
   if(G.hung&&G.view===G.ended){bar('기록 보기','closed',DATA[G.view].name,'걸어둔 카드의 세션 갈래예요. 보기만 할 수 있어요');drawGraph(G.view);return;}
   if(!G.view){bar('카드 없음','','','카드를 꽂으면 그 프로젝트 폴더가 열려요');body.innerHTML='<div class="empty">슬롯에 카드를 꽂아 주세요</div>';return;}
   const p=G.view,st=G.st[p];
