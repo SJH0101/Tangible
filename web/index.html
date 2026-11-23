@@ -80,7 +80,6 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-import {GLB} from './knot_device_glb.js';
 {
 const $=id=>document.getElementById(id);
 const view=$('view'),canvas=$('c');
@@ -126,8 +125,7 @@ const M={
   knob:new THREE.MeshStandardMaterial({color:0xf29a12,roughness:0.4})
 };
 const P={};
-const glbBuf=Uint8Array.from(atob(GLB),c=>c.charCodeAt(0)).buffer;
-new GLTFLoader().parse(glbBuf,'',g=>{
+new GLTFLoader().load('./knot_device.glb',g=>{
   g.scene.traverse(o=>{
     if(!o.isMesh)return;
     const k=o.parent&&o.parent.name.startsWith('W_')?o.parent.name.slice(2):o.name.startsWith('W_')?o.name.slice(2):null;
@@ -144,7 +142,7 @@ new GLTFLoader().parse(glbBuf,'',g=>{
   scene.add(g.scene);
   P.card_out_rim&&P.card_out.attach(P.card_out_rim);P.card_hung_rim&&P.card_hung.attach(P.card_hung_rim);
   setScene(0,true);
-},e=>console.error(e));
+},undefined,e=>console.error(e));
 
 /* ---------- 상태 ---------- */
 const S={card:false,paused:false,ended:false,hung:false,talks:0};
