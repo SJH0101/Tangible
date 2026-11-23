@@ -100,7 +100,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
-<header><h1>knot</h1><p>끝을 묶으면 AI는 놓고, 나는 돌아본다</p></header>
+<header><h1>knot</h1><p>줄을 묶어 AI와 한 일을 끝내고 돌아보는 디바이스</p></header>
 <main class="stage">
   <div class="view" id="view"><canvas id="c" aria-label="knot 디바이스 3D 모델"></canvas><div class="state" id="led"><i></i><span>대기 중</span></div><div class="hint">드래그해서 돌려보기, 스크롤해서 확대</div></div>
   <div class="side"><div class="laptop"><div class="lid"><div class="scr" id="scr">
@@ -344,7 +344,7 @@ B.bFlow.onclick=async()=>{
    ['포트폴리오 카드를 꽂아요. 이 폴더에는 TUI 이야기가 섞이지 않아요',async()=>{await insert('pf');await talk();}],
    ['다시 TUI 카드로 돌아와요. 세션들이 그대로 있어요',async()=>{await slide();await insert('tui');}],
    ['형태 탐색의 결정으로 돌아가 다른 갈래를 열어요. 앞의 인터랙션 갈래는 버려져요',async()=>{await newSess();await talk();await talk();}],
-   ['줄을 묶어 끝을 내요. AI는 이 맥락을 놓고, 나한테는 구멍 뚫린 카드가 남아요',()=>knot()],
+   ['줄을 묶어 끝내요. 이 맥락은 AI 기억에서 빠지고 카드에 구멍이 뚫려 나와요',()=>knot()],
    ['카드를 걸면 내가 고르고 버리고 방향을 튼 길이 펼쳐져요',()=>hang()]];
   for(const [t,f] of steps){if(!auto)return;cap(t);await f();await wait(700);}
   auto=false;refresh();

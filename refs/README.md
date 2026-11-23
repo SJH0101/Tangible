@@ -3,6 +3,11 @@
 첫 장 캡처는 같은 폴더의 `<arXiv id>-01.png`.
 
 ## AI는 끝난 맥락을 놓지 못한다
+세션을 넘는 기억 (메인)
+- Understanding Users' Privacy Perceptions Towards LLM's RAG-based Memory (arXiv 2508.07664, 2025) — 새 채팅을 열면 리셋된다고 믿지만 기억은 대화를 넘어 남는다
+- Biased or Personalized? The Impact of Personal Information on AI-driven Development (arXiv 2607.07480, 2026) — 프로젝트 기억은 그 일 안에서만 쓰이길 원했다
+
+아래 세 편(Lost, Unable to Forget, Context Length)은 대화 하나 안의 문제라 보조로만 씀
 - PersistBench: When Should Long-Term Memories Be Forgotten by LLMs? (arXiv 2602.01146, 2026) — 한 분야의 기억이 상관없는 새 질문에 끼어든다
 - STALE: Can LLM Agents Know When Their Memories Are No Longer Valid? (arXiv 2605.06527, 2026) — 기억이 낡았다는 걸 잘 알아채지 못한다
 - Unable to Forget: Proactive Interference Reveals Working Memory Limits in LLMs Beyond Context Length (arXiv 2506.08184, 2025) — 지난 정보가 지금 정보를 가린다
