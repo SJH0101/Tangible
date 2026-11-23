@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>knot 프로토타입</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 조용하고 단정한 제품 데모. 디바이스가 주인공.
+   IDEA: 책상 위 오브제와 그 옆 노트북 화면이 한 장면으로 움직이는 데모 스테이지.
+   PICTURE: 왼쪽 3D 디바이스(돌려보기), 오른쪽 노트북 화면(채팅/브랜치맵).
+   COLOUR and TYPE: 흰 바탕, 검정 디바이스, 호박색 LED 하나만 강조. Outfit + Noto Sans KR.
+   LAYOUT: 2단(좁으면 위아래), 아래에 동작 버튼 한 줄. */
+:root{color-scheme:light dark;--bg:light-dark(#f6f5f2,#121212);--ink:light-dark(#141414,#ecebe8);--sub:light-dark(#6b6a66,#a3a19c);--line:light-dark(#e2e0db,#2b2b2b);--card:light-dark(#ffffff,#1b1b1b);--amber:#f29a12;--amber-soft:light-dark(#fff2dc,#3a2a10)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans KR",system-ui,sans-serif;overflow-x:clip}
+header{padding:28px max(5vw,16px) 8px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+h1{font:600 40px/1.05 Outfit,sans-serif;margin:0;letter-spacing:-.01em}
+header p{margin:0;color:var(--sub)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;padding:12px max(5vw,16px) 0;max-width:1440px;margin:0 auto}
+.view{position:relative;min-height:540px;border-radius:20px;background:var(--card);overflow:hidden;border:1px solid var(--line)}
+.view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hint{position:absolute;left:16px;bottom:14px;font-size:13px;color:var(--sub)}
+.led{position:absolute;right:16px;top:14px;font-size:13px;color:var(--sub);display:flex;align-items:center;gap:8px}
+.led i{width:10px;height:10px;border-radius:50%;background:var(--line);transition:background .4s,box-shadow .4s}
+.led.on i{background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.screen{display:flex;flex-direction:column;border-radius:20px;background:#1d1d1f;padding:14px;min-height:540px}
+.scr{flex:1;display:flex;flex-direction:column;border-radius:10px;background:var(--card);overflow:hidden}
+.bar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:14px}
+.pill{padding:4px 12px;border-radius:20px;background:var(--bg);color:var(--sub);font-weight:500;white-space:nowrap}
+.pill.open{background:var(--amber-soft);color:#b86e00}
+.pill.closed{background:#2a2a2a;color:#ddd}
+.bar .name{font-weight:700}
+.bar .st{margin-left:auto;color:var(--sub);font-size:13px}
+.body{flex:1;position:relative;overflow:auto;padding:18px}
+.empty{height:100%;display:grid;place-items:center;text-align:center;color:var(--sub)}
+.msg{max-width:82%;margin:0 0 12px;padding:10px 14px;border-radius:14px;font-size:15px}
+.me{margin-left:auto;background:var(--bg)}
+.ai{background:var(--amber-soft)}
+.typing{display:inline-flex;gap:4px}.typing b{width:6px;height:6px;border-radius:50%;background:#c98a20;animation:t 1s infinite}.typing b:nth-child(2){animation-delay:.15s}.typing b:nth-child(3){animation-delay:.3s}
+@keyframes t{50%{opacity:.25}}
+.map{position:absolute;inset:0;padding:16px}
+.map svg{width:100%;height:100%}
+.legend{position:absolute;left:18px;bottom:12px;font-size:12px;color:var(--sub);display:flex;gap:14px}
+.legend span::before{content:"";display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--amber)}
+.legend span.d::before{background:#b9b7b1}
+.controls{display:flex;flex-wrap:wrap;gap:10px;padding:18px max(5vw,16px) 8px;max-width:1440px;margin:0 auto}
+button{font:500 15px "Noto Sans KR",sans-serif;min-height:44px;padding:0 18px;border-radius:22px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.note{padding:0 max(5vw,16px) 32px;max-width:1440px;margin:0 auto;color:var(--sub);font-size:13px}
+@media(max-width:900px){.stage{grid-template-columns:minmax(0,1fr)}.view,.screen{min-height:420px}h1{font-size:32px}}
+@media(prefers-reduced-motion:reduce){.typing b{animation:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<header><h1>knot</h1><p>줄을 묶어 AI 프로젝트를 끝내는 디바이스 · 프로토타입</p></header>
+<section class="stage">
+  <div class="view" id="view"><canvas id="c"></canvas><div class="led" id="led"><i></i><span>LED 꺼짐</span></div><div class="hint">드래그해서 돌려보기 · 스크롤로 확대</div></div>
+  <div class="screen"><div class="scr">
+    <div class="bar"><span class="pill" id="pill">카드 없음</span><span class="name" id="pname"></span><span class="st" id="st">카드를 꽂으면 프로젝트가 시작돼요</span></div>
+    <div class="body" id="body"><div class="empty">슬롯에 카드를 꽂아 주세요</div></div>
+  </div></div>
+</section>
+<nav class="controls" aria-label="동작">
+  <button id="bInsert" class="go">카드 꽂기</button>
+  <button id="bTalk">말 걸기</button>
+  <button id="bSlide">슬라이더로 빼기</button>
+  <button id="bKnot">줄 묶기</button>
+  <button id="bHang">뚫린 카드 걸기</button>
+  <button id="bReset">처음으로</button>
+</nav>
+<p class="note">채팅과 브랜치맵 내용은 이 TUI 과제를 예시로 채운 것. 디바이스는 Blender 모델 그대로.</p>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {GLB} from './knot_device_glb.js';
+{
+const $=id=>document.getElementById(id);
+const view=$('view'),canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+scene.environmentIntensity=0.35;
+const cam=new THREE.PerspectiveCamera(32,1,0.01,10);
+cam.position.set(0.46,0.26,0.40);
+const ctl=new OrbitControls(cam,canvas);ctl.target.set(0.0,0.11,0);ctl.enableDamping=true;ctl.minDistance=0.25;ctl.maxDistance=1.6;ctl.maxPolarAngle=Math.PI*0.49;
+const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(0.1,0.6,0.9);key.castShadow=true;
+key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-0.4,right:0.4,top:0.4,bottom:-0.4,near:0.1,far:3});key.shadow.radius=3;key.shadow.bias=-0.0004;
+scene.add(key);scene.add(new THREE.HemisphereLight(0xffffff,0x888888,0.5));
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(4,4),new THREE.ShadowMaterial({opacity:0.18}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+const U={uTime:{value:0},uOn:{value:0}};
+const noise=`
+float h3(vec3 p){p=fract(p*0.3183099+.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
+return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x),mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x),f.y),
+mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x),mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x),f.y),f.z);}`;
+const bodyMat=new THREE.MeshPhysicalMaterial({color:0x0b0b0c,roughness:0.32,clearcoat:0.25,clearcoatRoughness:0.08});
+bodyMat.onBeforeCompile=s=>{
+  Object.assign(s.uniforms,U);
+  s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nattribute vec3 ledMask;varying float vMask;varying vec3 vObj;')
+   .replace('#include <begin_vertex>','#include <begin_vertex>\nvMask=ledMask.r;vObj=position;');
+  s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nuniform float uTime;uniform float uOn;varying float vMask;varying vec3 vObj;'+noise)
+   .replace('#include <color_fragment>','#include <color_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.22,0.17,0.09),vMask);')
+   .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+   float t=uTime;float n=vn(vObj*9.0+vec3(t*0.35,-t*0.22,t*0.3));
+   float sh=mix(0.35,1.0,smoothstep(0.3,0.7,n))*(0.85+0.15*sin(t*0.8));
+   totalEmissiveRadiance+=vec3(1.0,0.45,0.0)*vMask*uOn*sh*1.8;`);
+};
+const M={
+  cord:new THREE.MeshStandardMaterial({color:0x121212,roughness:0.8}),
+  card:new THREE.MeshStandardMaterial({color:0x2c2c2e,roughness:0.6,transparent:true}),
+  rim:new THREE.MeshStandardMaterial({color:0x8a8a8a,roughness:0.5,transparent:true}),
+  pin:new THREE.MeshStandardMaterial({color:0x0e0e0e,roughness:0.3}),
+  knob:new THREE.MeshStandardMaterial({color:0xf29a12,roughness:0.4})
+};
+const P={};
+const glbBuf=Uint8Array.from(atob(GLB),c=>c.charCodeAt(0)).buffer;
+new GLTFLoader().parse(glbBuf,'',g=>{
+  g.scene.traverse(o=>{
+    if(!o.isMesh)return;
+    const k=o.parent&&o.parent.name.startsWith('W_')?o.parent.name.slice(2):o.name.startsWith('W_')?o.name.slice(2):null;
+    if(!k){o.visible=false;return;}
+    o.castShadow=true;o.receiveShadow=true;
+    if(k==='body'){const c=o.geometry.getAttribute('color');o.geometry.setAttribute('ledMask',c);o.geometry.deleteAttribute('color');o.material=bodyMat;}
+    else if(k.startsWith('cord')||k.startsWith('tail')||k==='knot_ball')o.material=M.cord.clone();
+    else if(k.endsWith('rim'))o.material=M.rim.clone();
+    else if(k.startsWith('card'))o.material=M.card.clone();
+    else if(k==='pin')o.material=M.pin;else if(k==='slider_knob')o.material=M.knob;
+    if(o.material.transparent===false&&(k.startsWith('cord')||k.startsWith('tail')||k==='knot_ball'))o.material.transparent=true;
+    P[k]=o;
+  });
+  scene.add(g.scene);
+  P.card_out_rim&&P.card_out.attach(P.card_out_rim);P.card_hung_rim&&P.card_hung.attach(P.card_hung_rim);
+  setScene(0,true);
+},e=>console.error(e));
+
+/* ---------- 상태 ---------- */
+const S={card:false,paused:false,ended:false,hung:false,talks:0};
+const anims=[];
+function tween(dur,fn,done){anims.push({t0:performance.now(),dur,fn,done});}
+function fade(o,to,dur=500){if(!o)return;const ms=o.material;const from=o.visible?ms.opacity:0;if(to>0)o.traverse(c=>{c.visible=true;});tween(dur,k=>{ms.opacity=from+(to-from)*k;o.traverse(c=>{if(c!==o&&c.material)c.material.opacity=ms.opacity;});},()=>{if(to===0)o.visible=false;});}
+function slideX(o,from,to,dur=700){if(!o)return;o.visible=true;o.position.x=from;tween(dur,k=>{o.position.x=from+(to-from)*k;});}
+const knotParts=['cord1_knot','cord2_knot','tail1','tail2','knot_ball'];
+function setScene(step,instant){
+  const show=(k,v)=>{const o=P[k];if(!o)return;o.visible=v;o.material.opacity=v?1:0;if(o.material.transparent!==undefined)o.material.transparent=true;o.traverse(c=>{if(c.material&&c!==o){c.material.opacity=v?1:0;c.visible=v;}});};
+  if(instant){['cord1_taut','cord2_taut'].forEach(k=>show(k,true));knotParts.forEach(k=>show(k,false));show('card_in',false);show('card_out',false);show('card_hung',false);if(P.card_in)P.card_in.position.x=0;if(P.card_out)P.card_out.position.x=0;}
+}
+function ledOn(v){tween(700,k=>{U.uOn.value=v?k:1-k;});$('led').classList.toggle('on',v);$('led').querySelector('span').textContent=v?'AI 답하는 중 · 일렁임':'LED 꺼짐';}
+
+/* ---------- 화면 ---------- */
+const body=$('body');
+const chat=[['me','카드 꽂으면 프로젝트 폴더가 생기게 하자'],['ai','좋아요. 카드 한 장이 폴더 하나예요. 이 폴더 안에서만 대화와 기억이 쌓여요.'],['me','끝낼 땐 줄 두 개를 묶는 걸로'],['ai','묶으면 카드에 구멍이 뚫려 나오고 폴더는 닫혀요. 다시 열 수는 없고 기록만 남아요.']];
+function bar(pill,cls,name,st){const p=$('pill');p.textContent=pill;p.className='pill '+(cls||'');$('pname').textContent=name||'';$('st').textContent=st||'';}
+function renderChat(n,typing){body.innerHTML=chat.slice(0,n).map(([w,t])=>`<p class="msg ${w}">${t}</p>`).join('')+(typing?'<p class="msg ai"><span class="typing"><b></b><b></b><b></b></span></p>':'');body.scrollTop=body.scrollHeight;}
+const tree={x:0,y:0,label:'TUI 과제 시작',kids:[
+ {label:'쌓이는 컨텍스트 오브제',dead:true,kids:[{label:'크레슬링 접기 (중간발표)',dead:true,kids:[{label:'안 접혀서 폐기',dead:true}]}]},
+ {label:'맞장구 오브제',dead:true,kids:[{label:'억지스러워 접음',dead:true}]},
+ {label:'프로젝트 끝내기',kids:[{label:'줄 하나 매듭',dead:true},{label:'두 줄 떼어 묶기',kids:[{label:'카드 = 폴더',kids:[{label:'뚫린 카드 걸어 보기'}]}]}]}]};
+function layout(n,d,yc){n.d=d;if(!n.kids){n.y=yc.v++;return n.y;}const ys=n.kids.map(k=>layout(k,d+1,yc));n.y=(ys[0]+ys[ys.length-1])/2;return n.y;}
+function drawMap(){
+  const yc={v:0};layout(tree,0,yc);const rows=yc.v,cols=5;
+  body.innerHTML='<div class="map"><svg id="mapsvg"></svg></div><div class="legend"><span>이어진 결정</span><span class="d">버린 갈래</span></div>';
+  const s=$('mapsvg');const draw=()=>{const W=s.clientWidth,H=s.clientHeight-30;const colW=(W-60)/(cols-0.4),cx=d=>16+d*colW,cy=y=>24+y*(H-60)/(rows-1);const fs=W<480?10:12,mc=Math.max(4,Math.floor((colW-14)/(fs*1.02)));
+    const wrap=t=>{const w=t.split(' '),L=[];let c='';for(const x of w){if((c+' '+x).trim().length>mc&&c){L.push(c);c=x;}else c=(c+' '+x).trim();}L.push(c);return L;};
+    let e='',n='';const walk=(a)=>{(a.kids||[]).forEach(b=>{const c=b.dead?'#b9b7b1':'#f29a12';e+=`<path d="M${cx(a.d)} ${cy(a.y)} C${cx(a.d)+colW*0.5} ${cy(a.y)},${cx(b.d)-colW*0.5} ${cy(b.y)},${cx(b.d)} ${cy(b.y)}" stroke="${c}" stroke-width="${b.dead?2:3}" fill="none"/>`;walk(b);});
+      const c=a.dead?'#b9b7b1':'#f29a12';n+=`<circle cx="${cx(a.d)}" cy="${cy(a.y)}" r="${a.dead?4:6}" fill="${c}"/><text x="${cx(a.d)-4}" y="${cy(a.y)+18}" font-size="${fs}" fill="${a.dead?'#9a988f':'currentColor'}">${wrap(a.label).map((l,i)=>`<tspan x="${cx(a.d)-4}" dy="${i?fs*1.25:0}">${l}</tspan>`).join('')}</text>`;};
+    walk(tree);s.innerHTML=e+n;};
+  draw();new ResizeObserver(draw).observe(s);
+}
+
+/* ---------- 버튼 ---------- */
+const B=['bInsert','bTalk','bSlide','bKnot','bHang','bReset'].reduce((a,k)=>(a[k]=$(k),a),{});
+function refresh(){B.bInsert.disabled=S.card&&!S.paused||S.ended&&!S.hung&&false;B.bInsert.textContent=S.paused?'카드 다시 꽂기':'카드 꽂기';
+  B.bInsert.disabled=(S.card&&!S.paused)||S.ended;B.bTalk.disabled=!S.card||S.paused||S.ended;B.bSlide.disabled=!S.card||S.paused||S.ended;B.bKnot.disabled=!S.card||S.paused||S.ended;B.bHang.disabled=!S.ended||S.hung;
+  for(const k in B)B[k].classList.remove('go');const nx=[B.bInsert,B.bTalk,B.bKnot,B.bHang].find(b=>!b.disabled);if(nx)nx.classList.add('go');}
+B.bInsert.onclick=()=>{S.card=true;S.paused=false;slideX(P.card_in,0.08,0,800);fade(P.card_in,1,300);bar('폴더 열림','open','TUI 과제','진행 중');renderChat(S.talks*2);if(!S.talks)body.innerHTML='<div class="empty">새 프로젝트 폴더가 생겼어요<br>대화는 이 폴더 안에만 쌓여요</div>';refresh();};
+B.bTalk.onclick=()=>{if(S.talks>=2){S.talks=1;}const n=S.talks*2+1;renderChat(n,true);ledOn(true);B.bTalk.disabled=true;
+  setTimeout(()=>{renderChat(n+1);S.talks++;ledOn(false);refresh();},3200);};
+B.bSlide.onclick=()=>{S.paused=true;const o=P.card_in;tween(600,k=>{o.position.x=0.05*k;});bar('일시정지','', 'TUI 과제','카드를 뺐어요 · 폴더는 열린 채로 남아요');refresh();};
+B.bKnot.onclick=()=>{S.ended=true;ledOn(false);['cord1_taut','cord2_taut'].forEach(k=>fade(P[k],0,400));setTimeout(()=>knotParts.forEach(k=>fade(P[k],1,500)),350);
+  fade(P.card_in,0,200);setTimeout(()=>{slideX(P.card_out,-0.06,0,900);fade(P.card_out,1,200);},700);
+  bar('폴더 닫힘','closed','TUI 과제','묶어서 끝냈어요 · 카드에 구멍이 뚫렸어요');body.innerHTML='<div class="empty">이 프로젝트는 끝났어요<br>대화는 다시 열 수 없고 기록만 남아요</div>';refresh();};
+B.bHang.onclick=()=>{S.hung=true;fade(P.card_out,0,500);setTimeout(()=>{const h=P.card_hung;const y0=h.position.y;h.position.y=y0+0.02;fade(h,1,500);tween(600,k=>{h.position.y=y0+0.02*(1-k);});},400);
+  bar('기록 보기','closed','TUI 과제','걸어둔 카드의 결정 흐름 · 보기만 해요');setTimeout(drawMap,600);refresh();};
+B.bReset.onclick=()=>{Object.assign(S,{card:false,paused:false,ended:false,hung:false,talks:0});setScene(0,true);U.uOn.value=0;$('led').classList.remove('on');bar('카드 없음','','','카드를 꽂으면 프로젝트가 시작돼요');body.innerHTML='<div class="empty">슬롯에 카드를 꽂아 주세요</div>';refresh();};
+refresh();
+
+/* ---------- 루프 ---------- */
+function size(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();}
+new ResizeObserver(size).observe(view);size();
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const t0=performance.now();
+renderer.setAnimationLoop(()=>{const now=performance.now();U.uTime.value=reduce?0:(now-t0)/1000;
+  for(let i=anims.length-1;i>=0;i--){const a=anims[i];let k=Math.min(1,(now-a.t0)/a.dur);k=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;a.fn(k);if(k>=1){anims.splice(i,1);a.done&&a.done();}}
+  ctl.update();renderer.render(scene,cam);});
+}
+</script>
+</body>
+</html>
