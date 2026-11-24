@@ -42,6 +42,8 @@ svg#map{display:block}
 .wrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;margin:0 max(4vw,16px) 48px}
 .side{background:var(--stage);border-radius:24px;padding:20px 14px;align-self:start;position:sticky;top:16px}
 .proj{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:500;padding:4px 8px 12px}
+.proj.out{margin-top:18px;font-size:14px;color:var(--mute)}
+.outnote{margin:12px 6px 0;font-size:12px;color:var(--mute);line-height:1.5}
 .side ul{list-style:none;margin:0 0 0 18px;padding:0 0 0 12px;border-left:1px solid var(--line)}
 .side li button{all:unset;box-sizing:border-box;display:block;width:100%;padding:9px 12px;border-radius:10px;font-size:15px;cursor:pointer;color:var(--ink)}
 .side li button:hover{background:var(--page)}
@@ -79,6 +81,9 @@ svg#map{display:block}
 <aside class="side" aria-label="프로젝트와 채팅">
   <div class="proj"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5h14M5 9h14M6 9v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/></svg>TUI</div>
   <ul id="chats"></ul>
+  <div class="proj out">프로젝트 밖</div>
+  <ul id="chats2"></ul>
+  <p class="outnote">이 두 채팅의 기억은 계정 메모리에 남아, 11월 24일에 "TUI 어디까지 했어?"라고 묻자 불효자손을 진행 중인 것처럼 꺼냄</p>
 </aside>
 <div class="main"><div class="mapwrap"><svg id="map"></svg></div>
 <section class="detail" id="detail"></section></div>
@@ -114,6 +119,9 @@ const N=[
  chat:[['u','Grows as you talk. Compacts when pressed. 마지막 대사 이렇게 바꿔줄래'],['a','compact에 눌려서 납작해진다는 뜻과 맥락 압축이 같이 들어 있어서 더 좋아']]},
 {id:'b15',s:'c5',p:'t5',dead:1,title:'진공 오리가미, 공압',who:'ai',dec:'형태부터 바꾸기로 해서 버림',chat:[['a','공압으로 가면 크레슬링을 비닐에 넣고 진공으로 접는 방법이 있어'],['u','크레슬링을 버리고, 컨셉은 유지하되 형태를 확 바꾸고 싶어']]},
 {id:'b16',s:'c5',p:'t5',dead:1,title:'손목 받침, 바닥 막, 튜브',who:'ai',dec:'진행 안 함',chat:[['a','형태를 확 바꾸려면 위치랑 축부터 바꿔야 해. 키보드 앞 손목 받침 자체가 디바이스야'],['u','음 다 별론데']]},
+{id:'b34',s:'c6',p:'t5',dead:1,title:'찢기, 맥세이프 태그',who:'me',dec:'접음',note:'기록 요약',chat:[['n','폰에 맥세이프로 붙여두었다가 찢으면 초기화되는 태그 아이디어. 찢기(tearing) 개념을 써보다 접음']]},
+{id:'b35',s:'c7',p:'t5',dead:1,title:'불효자손',who:'me',dec:'선택하지 않고 넘어감',note:'기록 요약',chat:[['n','효자손으로 등을 긁으면 자식에게 전화가 가는 컨셉. 긁는 방향이나 리듬으로 아들, 딸을 고름. 손잡이에 IMU 하나'],['n','11월 10일 이후 이 프로젝트 밖 기억에 그대로 남아 있었음']]},
+{id:'b36',s:'c7',p:'t5',dead:1,title:'발로 긁는 선풍기',who:'me',dec:'선택하지 않고 넘어감',note:'기록 요약',chat:[['n','누워서 받침대를 발로 긁으면 긁는 속도에 따라 풍속이 바뀌고, 멈추면 천천히 줄어드는 선풍기. 패드 밑 피에조 센서 하나'],['n','예상 반론은 "리모컨 있잖아"']]},
 {id:'t6',s:'c5',p:'t5',date:'11월 16일',title:'인터랙션은 그대로',who:'me',dec:'중간발표 구조는 두고 형태만 다시',
  chat:[['a','형태는 아무것도 닮지 않은 추상 오브제로 가자'],['u','근데 우리 거 중간에 잘 엮어놨잖아'],['a','맞아, 내가 헛짚었어. 인터랙션은 그대로 두고 형태만 바꾸면 되는 거였어']]},
 {id:'b17',s:'c5',p:'t6',dead:1,title:'조개, 돛, 나팔, 가오리',who:'ai',dec:'뻔하거나 물리적으로 불가능해서 버림',chat:[['a','스케치에서 조개형으로 가자'],['u','조개 벌어지는 뻔한 거 하지 말라고'],['u','물리적으로 불가능하잖아']]},
@@ -144,10 +152,10 @@ const N=[
 {id:'t11',s:'c5',p:'t10',date:'11월 24일',title:'knot.',who:'me',dec:'끝난 맥락은 닫고, 내가 한 판단은 돌아본다',
  chat:[['u','이 프로젝트에 마침표를 찍고 돌아보게 하는 거지. AI랑 어떻게 대화해서 했는지 보면서, AI 시대에 내가 한 게 없는 것 같은 느낌을 줄여주는'],['u','맥락의 마무리랑 이거를 합쳐야 강한 컨셉이 될 거야'],['u','knot, dot. 비슷하네']]}
 ];
-const CHATS=[{id:'c4',t:'블렌더 컨셉 렌더링'},{id:'c5',t:'생각을해봅시다'},{id:'c3',t:'Figma 디자인 수정'},{id:'c2',t:'중간발표 주제'},{id:'c1',t:'AI context TUI concept'}];
+const CHATS=[{id:'c4',t:'블렌더 컨셉 렌더링'},{id:'c5',t:'생각을해봅시다'},{id:'c3',t:'Figma 디자인 수정'},{id:'c2',t:'중간발표 주제'},{id:'c1',t:'AI context TUI concept'},{id:'c7',t:'발로 스크래칭 TUI 디바이스',out:1},{id:'c6',t:'TUI tearing 개념 활용',out:1}];
 const by={};N.forEach(n=>{by[n.id]=n;n.kids=[]});N.forEach(n=>{if(n.p)by[n.p].kids.push(n)});
 // ---- organic layout
-const HUE={c1:'#6fa3c7',c2:'#8fb46a',c3:'#c48fd0',c4:'#d6926a',c5:'#cbb25c'};
+const HUE={c6:'#8a9bb0',c7:'#a8a08a',c1:'#6fa3c7',c2:'#8fb46a',c3:'#c48fd0',c4:'#d6926a',c5:'#cbb25c'};
 const trunk=[];(function walk(n){trunk.push(n);const nx=n.kids.find(k=>!k.dead);if(nx)walk(nx);})(by.t0);
 const tr=N.filter(n=>!n.dead),dd=N.filter(n=>n.dead),myD=dd.filter(n=>n.who==='me').length,lf=dd.filter(n=>n.left).length;
 document.getElementById('count').innerHTML=`갈래 ${dd.length}개 중 <b>${myD}개</b>는 내가 낸 것, ${dd.length-myD}개는 AI가 낸 것. 전부 버렸고, 그중 ${lf}개가 knot.에 무언가를 남김. 끝까지 이어진 판단 ${tr.length}개는 <b>전부 내 말</b>.`;
@@ -208,16 +216,17 @@ sv.addEventListener('click',ev=>{const t=ev.target.closest('.node');if(t)show(t.
 sv.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){const t=ev.target.closest('.node');if(t){ev.preventDefault();show(t.dataset.id)}}});
 
 const ul=document.getElementById('chats');
-ul.innerHTML=CHATS.map(c=>{const k=N.filter(n=>n.s===c.id);return `<li><button data-c="${c.id}">${c.t}<small>노드 ${k.length}개${k[0]&&k.find(n=>n.date)?', '+k.find(n=>n.date).date+'부터':''}</small></button></li>`}).join('');
+ul.innerHTML=CHATS.filter(c=>!c.out).map(c=>{const k=N.filter(n=>n.s===c.id);return `<li><button data-c="${c.id}">${c.t}<small>노드 ${k.length}개${k[0]&&k.find(n=>n.date)?', '+k.find(n=>n.date).date+'부터':''}</small></button></li>`}).join('');
+const ul2=document.getElementById('chats2');ul2.innerHTML=CHATS.filter(c=>c.out).map(c=>{const k=N.filter(n=>n.s===c.id);return `<li><button data-c="${c.id}">${c.t}<small>노드 ${k.length}개, 11월 10일 무렵</small></button></li>`}).join('');
 function focusChat(cid){
-  ul.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===cid));
+  document.querySelectorAll('.side button').forEach(b=>b.classList.toggle('on',b.dataset.c===cid));
   sv.querySelectorAll('.node,.edge').forEach(el=>el.classList.toggle('dim',!!cid&&el.dataset.s!==cid));
   if(cid){const xs=N.filter(n=>n.s===cid).map(X);const w=document.querySelector('.mapwrap');const left=Math.min(...xs)-60,right=Math.max(...xs)+220;if(left<w.scrollLeft||right>w.scrollLeft+w.clientWidth)w.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}
 function showChat(cid){const c=CHATS.find(x=>x.id===cid),ns=N.filter(n=>n.s===cid);focusChat(cid);
   det.innerHTML=`<div class="chathead"><h2>${esc(c.t)}</h2><span class="note">이 채팅에서 나온 갈래 ${ns.filter(n=>n.dead).length}개, 이어진 판단 ${ns.filter(n=>!n.dead).length}개</span></div>
   <div class="meta"><p class="dec"><em>노드를 누르면 그 부분만 볼 수 있음</em></p></div>
   <div class="chat">${ns.map(n=>`<div class="sep">${esc(n.title)}${n.dead?' (버림)':''}</div>`+n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')).join('')}</div>`;}
-ul.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11');}else showChat(b.dataset.c);});
+const onSide=ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11');}else showChat(b.dataset.c);};ul.addEventListener('click',onSide);ul2.addEventListener('click',onSide);
 show('t11');focusChat(null);
 </script>
 </body>
