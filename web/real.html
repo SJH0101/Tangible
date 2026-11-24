@@ -22,8 +22,15 @@ header a{margin-left:auto;color:var(--mute);font-size:14px}
 .legend svg{flex:none}
 .count{padding:0 max(4vw,16px) 14px;font-size:15px}
 .count b{color:var(--amber);font-weight:600}
-.mapwrap{border-radius:24px;background:var(--stage);overflow-x:auto;overflow-y:hidden}
-svg#map{display:block}
+.mapbox{position:relative}
+.mapwrap{border-radius:24px;background:var(--stage);overflow:auto;height:clamp(420px,72vh,900px);display:flex;cursor:grab;overscroll-behavior:contain}
+.mapwrap.drag{cursor:grabbing;user-select:none}
+.zoom{position:absolute;right:14px;bottom:14px;display:flex;gap:6px;z-index:2}
+.zoom button{min-width:40px;height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--stage) 88%,transparent);color:var(--ink);font:inherit;font-size:15px;cursor:pointer;backdrop-filter:blur(6px)}
+.zoom button:hover{border-color:var(--amber)}
+.zoom button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.zoom output{align-self:center;min-width:48px;text-align:center;font-size:12px;color:var(--mute)}
+svg#map{display:block;margin:auto;flex:none}
 .node{cursor:pointer}
 .node:focus{outline:none}
 .node:focus-visible .hit{stroke:var(--amber);stroke-width:2}
@@ -85,7 +92,7 @@ svg#map{display:block}
   <ul id="chats2"></ul>
   <p class="outnote">이 두 채팅의 기억은 계정 메모리에 남아, 11월 24일에 "TUI 어디까지 했어?"라고 묻자 불효자손을 진행 중인 것처럼 꺼냄</p>
 </aside>
-<div class="main"><div class="mapwrap"><svg id="map"></svg></div>
+<div class="main"><div class="mapbox"><div class="mapwrap"><svg id="map"></svg></div><div class="zoom" role="group" aria-label="지도 확대 축소"><button id="zOut" aria-label="축소">−</button><output id="zLv">100%</output><button id="zIn" aria-label="확대">+</button><button id="zFit">전체 보기</button></div></div>
 <section class="detail" id="detail"></section></div>
 </div>
 <script>
@@ -162,7 +169,7 @@ document.getElementById('count').innerHTML=`갈래 ${dd.length}개 중 <b>${myD}
 const sv=document.getElementById('map');
 const H=900,MID=H/2;let x=120;
 trunk.forEach((n,i)=>{const k=n.kids.filter(c=>c.dead).length;n.px=x;n.py=MID+Math.sin(i*0.9)*46;x+=Math.max(250,170+k*62);});
-const W=x+80;sv.setAttribute('width',W);sv.setAttribute('height',H);sv.setAttribute('viewBox',`0 0 ${W} ${H}`);
+const W=x+80;sv.setAttribute('viewBox',`0 0 ${W} ${H}`);
 // branches fan out from a fork just after each trunk node
 trunk.forEach((n,i)=>{const dk=n.kids.filter(c=>c.dead),nx=trunk[i+1];const span=nx?nx.px-n.px:260;
   dk.forEach((k,j)=>{const up=j%2===0,rank=Math.floor(j/2),cnt=Math.ceil(dk.length/2);
@@ -204,6 +211,30 @@ for(const n of N){const x=n.px,y=n.py,mine=n.who==='me',c=n.dead?HUE[n.s]:'#f2a1
   g+=`<g class="node" data-s="${n.s}" data-id="${n.id}" tabindex="0" role="button" aria-label="${esc(n.title)}">
   <rect class="hit" x="${n.dead?x-12:tx-10}" y="${by_}" width="${bw}" height="${bh}" rx="10" fill="transparent"/>${dot}${label}</g>`;}
 sv.innerHTML=bg+th+e+g;
+// zoom and pan
+const wrapEl=document.querySelector('.mapwrap');let Z=1;
+const ZMIN=()=>Math.min(wrapEl.clientWidth/W,wrapEl.clientHeight/H),ZMAX=2.5;
+function setZ(z,ax,ay){z=Math.max(ZMIN(),Math.min(ZMAX,z));
+  if(ax==null){ax=wrapEl.clientWidth/2;ay=wrapEl.clientHeight/2;}
+  const cx=(wrapEl.scrollLeft+ax)/Z,cy=(wrapEl.scrollTop+ay)/Z;Z=z;
+  sv.setAttribute('width',W*Z);sv.setAttribute('height',H*Z);
+  wrapEl.scrollLeft=cx*Z-ax;wrapEl.scrollTop=cy*Z-ay;
+  document.getElementById('zLv').textContent=Math.round(Z*100)+'%';}
+document.getElementById('zIn').onclick=()=>setZ(Z*1.25);
+document.getElementById('zOut').onclick=()=>setZ(Z/1.25);
+document.getElementById('zFit').onclick=()=>setZ(ZMIN());
+wrapEl.addEventListener('wheel',ev=>{if(!(ev.ctrlKey||ev.metaKey))return;ev.preventDefault();
+  const r=wrapEl.getBoundingClientRect();setZ(Z*Math.exp(-ev.deltaY*0.01),ev.clientX-r.left,ev.clientY-r.top);},{passive:false});
+{let d=null;
+ wrapEl.addEventListener('pointerdown',ev=>{if(ev.button!==0)return;d={x:ev.clientX,y:ev.clientY,l:wrapEl.scrollLeft,t:wrapEl.scrollTop,m:false,id:ev.pointerId};});
+ wrapEl.addEventListener('pointermove',ev=>{if(!d)return;const dx=ev.clientX-d.x,dy=ev.clientY-d.y;
+   if(!d.m&&Math.hypot(dx,dy)>5){d.m=true;wrapEl.classList.add('drag');wrapEl.setPointerCapture(d.id);}
+   if(d.m){wrapEl.scrollLeft=d.l-dx;wrapEl.scrollTop=d.t-dy;}});
+ const end=()=>{if(d&&d.m){wrapEl.classList.remove('drag');wrapEl.addEventListener('click',e=>e.stopPropagation(),{capture:true,once:true});}d=null;};
+ wrapEl.addEventListener('pointerup',end);wrapEl.addEventListener('pointercancel',end);}
+document.addEventListener('keydown',ev=>{if(ev.target.closest('input,textarea'))return;if(ev.key==='+'||ev.key==='=')setZ(Z*1.25);else if(ev.key==='-')setZ(Z/1.25);else if(ev.key==='0')setZ(ZMIN());});
+setZ(wrapEl.clientHeight/H);wrapEl.scrollLeft=0;wrapEl.scrollTop=0;
+
 const det=document.getElementById('detail');
 function show(id){const n=by[id];if(typeof focusChat==='function')focusChat(n.s);
   det.innerHTML=`<div class="meta"><div class="date">${n.date||''}</div><h2>${esc(n.title)}</h2>
@@ -221,7 +252,7 @@ const ul2=document.getElementById('chats2');ul2.innerHTML=CHATS.filter(c=>c.out)
 function focusChat(cid){
   document.querySelectorAll('.side button').forEach(b=>b.classList.toggle('on',b.dataset.c===cid));
   sv.querySelectorAll('.node,.edge').forEach(el=>el.classList.toggle('dim',!!cid&&el.dataset.s!==cid));
-  if(cid){const xs=N.filter(n=>n.s===cid).map(X);const w=document.querySelector('.mapwrap');const left=Math.min(...xs)-60,right=Math.max(...xs)+220;if(left<w.scrollLeft||right>w.scrollLeft+w.clientWidth)w.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}
+  if(cid){const xs=N.filter(n=>n.s===cid).map(X);const w=wrapEl;const left=(Math.min(...xs)-60)*Z,right=(Math.max(...xs)+220)*Z;if(left<w.scrollLeft||right>w.scrollLeft+w.clientWidth)w.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}
 function showChat(cid){const c=CHATS.find(x=>x.id===cid),ns=N.filter(n=>n.s===cid);focusChat(cid);
   det.innerHTML=`<div class="chathead"><h2>${esc(c.t)}</h2><span class="note">이 채팅에서 나온 갈래 ${ns.filter(n=>n.dead).length}개, 이어진 판단 ${ns.filter(n=>!n.dead).length}개</span></div>
   <div class="meta"><p class="dec"><em>노드를 누르면 그 부분만 볼 수 있음</em></p></div>
