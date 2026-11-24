@@ -50,7 +50,9 @@ svg#map{display:block}
 .side li small{display:block;color:var(--mute);font-size:12px}
 .main .mapwrap,.main .detail{margin-left:0;margin-right:0}
 .main .detail{margin-bottom:0}
-.node.dim{opacity:.18}
+.node.dim{opacity:.16}
+.thread.dim{opacity:.05!important}
+.node:hover circle{filter:brightness(1.25)}
 .edge.dim{opacity:.12}
 .chathead{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;margin-bottom:-6px}
 .chathead h2{margin:0;font-size:20px}
@@ -144,35 +146,56 @@ const N=[
 ];
 const CHATS=[{id:'c4',t:'블렌더 컨셉 렌더링'},{id:'c5',t:'생각을해봅시다'},{id:'c3',t:'Figma 디자인 수정'},{id:'c2',t:'중간발표 주제'},{id:'c1',t:'AI context TUI concept'}];
 const by={};N.forEach(n=>{by[n.id]=n;n.kids=[]});N.forEach(n=>{if(n.p)by[n.p].kids.push(n)});
-// layout: trunk on row 0, dead branches fan above/below
-const place=(n,c)=>{n.c=c;n.r=0;const dk=n.kids.filter(k=>k.dead);const per=4,span=Math.ceil(dk.length/per);
-  dk.forEach((k,i)=>{const sub=Math.floor(i/per),j=i%per;k.c=c+0.72+sub*0.74;k.r=(j%2?1:-1)*(Math.floor(j/2)+1);});
-  const next=n.kids.find(k=>!k.dead);if(next)place(next,c+Math.max(1,0.72+span*0.74+0.22));};
-place(by.t0,0);
+// ---- organic layout
+const HUE={c1:'#6fa3c7',c2:'#8fb46a',c3:'#c48fd0',c4:'#d6926a',c5:'#cbb25c'};
+const trunk=[];(function walk(n){trunk.push(n);const nx=n.kids.find(k=>!k.dead);if(nx)walk(nx);})(by.t0);
 const tr=N.filter(n=>!n.dead),dd=N.filter(n=>n.dead),myD=dd.filter(n=>n.who==='me').length,lf=dd.filter(n=>n.left).length;
 document.getElementById('count').innerHTML=`갈래 ${dd.length}개 중 <b>${myD}개</b>는 내가 낸 것, ${dd.length-myD}개는 AI가 낸 것. 전부 버렸고, 그중 ${lf}개가 knot.에 무언가를 남김. 끝까지 이어진 판단 ${tr.length}개는 <b>전부 내 말</b>.`;
 const sv=document.getElementById('map');
-const CW=270,RH=100,minR=Math.min(...N.map(n=>n.r)),maxR=Math.max(...N.map(n=>n.r));
-const W=80+(Math.max(...N.map(n=>n.c))+1)*CW,H=(maxR-minR)*RH+170;
-sv.setAttribute('width',W);sv.setAttribute('height',H);
-const X=n=>50+n.c*CW,Y=n=>70+(n.r-minR)*RH;
+const H=900,MID=H/2;let x=120;
+trunk.forEach((n,i)=>{const k=n.kids.filter(c=>c.dead).length;n.px=x;n.py=MID+Math.sin(i*0.9)*46;x+=Math.max(250,170+k*62);});
+const W=x+80;sv.setAttribute('width',W);sv.setAttribute('height',H);sv.setAttribute('viewBox',`0 0 ${W} ${H}`);
+// branches fan out from a fork just after each trunk node
+trunk.forEach((n,i)=>{const dk=n.kids.filter(c=>c.dead),nx=trunk[i+1];const span=nx?nx.px-n.px:260;
+  dk.forEach((k,j)=>{const up=j%2===0,rank=Math.floor(j/2),cnt=Math.ceil(dk.length/2);
+    const t=(rank+1)/(cnt+1);const fx=n.px+span*(0.18+0.5*t);const fy=n.py+(nx?(nx.py-n.py)*(0.18+0.5*t):0);
+    const len=170+((rank%2)?80:0)+rank*30;const ang=(up?-1:1)*(0.95-0.08*rank);
+    k.fx=fx;k.fy=fy;k.px=fx+Math.cos(ang)*len*0.7;k.py=fy+Math.sin(ang)*len;
+    k.py=Math.max(70,Math.min(H-110,k.py));});});
+const X=n=>n.px,Y=n=>n.py;
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const wrap=(t,m)=>{const w=t.split(' '),o=[];let c='';for(const k of w){if(c&&(c+' '+k).length>m){o.push(c);c=k}else c=c?c+' '+k:k}if(c)o.push(c);return o};
-let e='',g='';
-for(const n of N){if(!n.p)continue;const p=by[n.p],x1=X(p),y1=Y(p),x2=X(n),y2=Y(n);
-  if(n.dead){const fx=x2-16;e+=`<path class="edge" data-s="${n.s}" d="M${fx} ${y1}C${fx+CW*.1} ${y1},${x2-CW*.06} ${y2},${x2} ${y2}" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="4 4" opacity=".7"/>`;}
-  else e+=`<path class="edge" data-s="${n.s}" d="M${x1} ${y1}H${x2}" stroke="#f2a114" stroke-width="3"/>`;}
-for(const n of N){const x=X(n),y=Y(n),mine=n.who==='me';
-  const dot=mine?`<circle cx="${x}" cy="${y}" r="${n.dead?6:8}" fill="${n.dead?'var(--mute)':'#f2a114'}"/>`:`<circle cx="${x}" cy="${y}" r="6" fill="var(--stage)" stroke="${n.dead?'var(--mute)':'var(--ink)'}" stroke-width="2"/>`;
-  const tc=n.dead?'var(--mute)':'var(--ink)';
-  const lines=wrap(n.dec,n.dead?15:13);
-  g+=`<g class="node" data-s="${n.s}" tabindex="0" role="button" aria-label="${esc(n.title)}" data-id="${n.id}">
-  <rect class="hit" x="${x-14}" y="${y-46}" width="${CW*0.6}" height="${46+20+lines.length*17+(n.left?16:0)}" fill="transparent" rx="8"/>
-  ${dot}
-  <text x="${x-4}" y="${y-14}" font-size="14" font-weight="600" fill="${tc}" ${n.dead?'text-decoration="line-through"':''}>${esc(n.title)}</text>
-  ${n.date?`<text x="${x-4}" y="${y-34}" font-size="11" fill="var(--mute)">${n.date}</text>`:''}
-  <text y="${y+24}" font-size="12" fill="${n.dead?'var(--mute)':'#f2a114'}">${lines.map((l,i)=>`<tspan x="${x-4}" dy="${i?16:0}">${esc(l)}</tspan>`).join('')}</text>${n.left?`<text x="${x-4}" y="${y+28+lines.length*16}" font-size="12" font-weight="600" fill="#f2a114">남김: ${esc(n.left)}</text>`:''}</g>`;}
-sv.innerHTML=e+g;
+let bg='',e='',th='',g='';
+// chat regions: contiguous stretches of the trunk
+{const segs=[];trunk.forEach((n,i)=>{const last=segs[segs.length-1];if(last&&last.s===n.s)last.to=i;else segs.push({s:n.s,from:i,to:i});});
+ segs.forEach((g,i)=>{const x0=trunk[g.from].px-90,nxt=segs[i+1],x1=nxt?trunk[nxt.from].px-100:W-20,c=CHATS.find(c=>c.id===g.s);
+  bg+=`<rect x="${x0}" y="24" width="${x1-x0}" height="${H-48}" rx="28" fill="${HUE[g.s]}" opacity=".06"/><text x="${x0+22}" y="56" font-size="13" font-weight="600" fill="${HUE[g.s]}">${esc(c.t)}</text>`;});}
+// trunk as smooth curve
+let d=`M${trunk[0].px-60} ${trunk[0].py}`;trunk.forEach((n,i)=>{const p=trunk[i-1];if(!p){d+=` L${n.px} ${n.py}`;return;}const mx=(p.px+n.px)/2;d+=` C${mx} ${p.py},${mx} ${n.py},${n.px} ${n.py}`;});
+e+=`<path d="${d}" fill="none" stroke="#f2a114" stroke-width="4" stroke-linecap="round"/>`;
+trunk.forEach((n,i)=>{if(i)e+=`<path class="edge" data-s="${n.s}" d="M0 0" />`;});
+// branches
+for(const n of dd){const c=HUE[n.s],qx=n.fx+(n.px-n.fx)*0.1,qy=n.py;
+  e+=`<path class="edge" data-s="${n.s}" d="M${n.fx} ${n.fy}C${n.fx+50} ${n.fy},${n.px-70} ${n.py},${n.px} ${n.py}" fill="none" stroke="${c}" stroke-width="1.6" stroke-dasharray="${n.left?'':'3 5'}" opacity="${n.left?.75:.6}" stroke-linecap="round"/>`;}
+// threads from "left" nodes into the final knot
+const fin=trunk[trunk.length-1];
+for(const n of dd.filter(n=>n.left)){const mx=(n.px+fin.px)/2;
+  th+=`<path class="edge thread" data-s="${n.s}" d="M${n.px} ${n.py}C${mx} ${n.py},${mx} ${fin.py},${fin.px} ${fin.py}" fill="none" stroke="#f2a114" stroke-width="1.2" opacity=".28"/>`;}
+for(const n of N){const x=n.px,y=n.py,mine=n.who==='me',c=n.dead?HUE[n.s]:'#f2a114';
+  const r=n.dead?(n.left?7:5):(n===fin?13:9);
+  const dot=n===fin?`<circle cx="${x}" cy="${y}" r="${r+6}" fill="none" stroke="#f2a114" stroke-width="1.5" opacity=".5"/><circle cx="${x}" cy="${y}" r="${r}" fill="#f2a114"/>`
+    :mine?`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`:`<circle cx="${x}" cy="${y}" r="${r}" fill="var(--stage)" stroke="${c}" stroke-width="2"/>`;
+  const above=n.dead?n.py<n.fy:(trunk.indexOf(n)%2===1);
+  const lines=n.dead?[]:wrap(n.dec,14);
+  const tx=x+(n.dead?12:-4),ty=n.dead?(y+5):(above?y-48-lines.length*16:y+30);
+  let label='';
+  if(n.dead){label=`<text x="${tx}" y="${ty}" font-size="13" fill="var(--ink)" opacity=".82">${esc(n.title)}</text>${n.left?`<text x="${tx}" y="${ty+17}" font-size="11.5" font-weight="600" fill="#f2a114">남김: ${esc(n.left)}</text>`:''}`;}
+  else{label=`<text x="${tx}" y="${ty}" font-size="11" fill="var(--mute)">${n.date||''}</text><text x="${tx}" y="${ty+19}" font-size="${n===fin?20:15}" font-weight="600" fill="var(--ink)">${esc(n.title)}</text><text y="${ty+38}" font-size="12" fill="#f2a114">${lines.map((l,i)=>`<tspan x="${tx}" dy="${i?16:0}">${esc(l)}</tspan>`).join('')}</text>`;}
+  const bw=n.dead?Math.max(120,n.title.length*13+20):200,bh=n.dead?(n.left?44:28):(70+lines.length*16);
+  const by_=n.dead?y-16:ty-14;
+  g+=`<g class="node" data-s="${n.s}" data-id="${n.id}" tabindex="0" role="button" aria-label="${esc(n.title)}">
+  <rect class="hit" x="${n.dead?x-12:tx-10}" y="${by_}" width="${bw}" height="${bh}" rx="10" fill="transparent"/>${dot}${label}</g>`;}
+sv.innerHTML=bg+th+e+g;
 const det=document.getElementById('detail');
 function show(id){const n=by[id];if(typeof focusChat==='function')focusChat(n.s);
   det.innerHTML=`<div class="meta"><div class="date">${n.date||''}</div><h2>${esc(n.title)}</h2>
@@ -195,7 +218,7 @@ function showChat(cid){const c=CHATS.find(x=>x.id===cid),ns=N.filter(n=>n.s===ci
   <div class="meta"><p class="dec"><em>노드를 누르면 그 부분만 볼 수 있음</em></p></div>
   <div class="chat">${ns.map(n=>`<div class="sep">${esc(n.title)}${n.dead?' (버림)':''}</div>`+n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')).join('')}</div>`;}
 ul.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11');}else showChat(b.dataset.c);});
-show('t11');
+show('t11');focusChat(null);
 </script>
 </body>
 </html>
