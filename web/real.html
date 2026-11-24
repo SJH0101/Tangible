@@ -67,6 +67,13 @@ svg#map{display:block;margin:auto;flex:none}
 .chathead h2{margin:0;font-size:20px}
 .sep{align-self:center;color:var(--mute);font-size:12px;margin:6px 0}
 @media (max-width:900px){.wrap{grid-template-columns:1fr}.side{position:static}}
+.embed header,.embed .legend,.embed .count,.embed .side,.embed .detail{display:none}
+.embed{background:var(--stage);overflow:hidden}
+.embed .wrap{display:block;margin:0}
+.embed .mapwrap{height:100vh;border-radius:0}
+.embed .zoom{right:8px;bottom:8px;gap:4px}
+.embed .zoom button{min-width:28px;height:28px;padding:0 8px;border-radius:8px;font-size:12px}
+.embed .zoom output{min-width:36px;font-size:10px}
 @media (max-width:760px){.detail{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -96,6 +103,7 @@ svg#map{display:block;margin:auto;flex:none}
 <section class="detail" id="detail"></section></div>
 </div>
 <script>
+if(new URLSearchParams(location.search).has('embed'))document.body.classList.add('embed');
 // who: me = 내가 냄, ai = AI가 냄 / dead: 버린 갈래
 const N=[
 {id:'t0',s:'c1',date:'10월 중순',title:'AI 맥락이 쌓이는 걸 다루자',who:'me',dec:'쌓이면 변하고, 떼면 README, 붙이면 새 세션',

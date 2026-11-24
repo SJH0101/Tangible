@@ -56,6 +56,7 @@ header .real:hover{background:var(--amber);color:#1a1205}
 .dec{font-size:12px;margin:4px 0 12px;color:var(--amber)}
 .note2{font-size:12px;color:var(--mute);margin:0 0 12px}
 .graph{position:absolute;inset:0;padding:8px 10px}
+.rec{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 .graph svg{width:100%;height:100%;overflow:visible}
 .cap{min-height:24px;margin:14px max(4vw,16px) 0;color:var(--ink);font-size:15px}
 .gap{flex:1}
@@ -211,9 +212,9 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 /* ---------- 프로젝트와 세션 ---------- */
 const DATA={
  tui:{name:'TUI 과제',color:0x1c1c1e,sessions:[
-  {id:'s1',title:'형태 탐색',parent:null,ex:[['노트북 옆에 둘 오브제 형태 같이 보자','접히는 구조면 쌓인 맥락을 높이로 보여줄 수 있어요. 크레슬링 접기는 어때요?'],['좋아, 크레슬링으로 가자','크레슬링 접기로 정리해둘게요.']],decision:'크레슬링 접기로 간다'},
-  {id:'s2',title:'인터랙션',parent:'s1',ex:[['크레슬링 윗면을 누르면 압축되게 하자','누르면 접히면서 카드가 나오는 흐름으로 정리할게요.']],decision:'누르면 접힌다'},
-  {id:'s3',title:'방향 전환',parent:'s1',ex:[['종이로 접어봤는데 실제로 안 접혀. 크레슬링 버리자','그럼 형태 대신 끝내는 행위를 다뤄볼까요? 줄을 묶으면 프로젝트가 끝나는 식으로요.'],['좋다. 줄 두 개를 묶는 걸로','줄을 묶어서 끝내는 걸로 정리할게요. 인터랙션 세션의 누르기 안은 접을게요.']],decision:'줄을 묶어서 끝낸다',kills:'s2'}]},
+  {id:'s1',title:'AI context TUI concept',parent:null,ex:[['세션이 지날수록 컨텍스트를 비워줘야 하는데, 얼마나 쌓였는지 체감이 안 돼서 채팅이 꽉 찰 때까지 썼어','정보가 없는 게 아니라 몰입 중에 안 보이는 거네요. 쌓이는 정도를 물건으로 보여주는 쪽으로 가볼까요?'],['시야에서 막 움직이고, 진짜 만져서 느낄 수 있는 거면 좋겠어','보이고 만져지는 물건으로 정리할게요.']],decision:'보이고 만져지는 물건'},
+  {id:'s2',title:'중간발표 주제',parent:'s1',ex:[['물통이 위로 펴지고, 누르면 압축되고, 층마다 카드가 있어','쌓이면 펴지고 누르면 줄어드는 구조로 정리할게요. 중간발표는 이걸로 가요.']],decision:'누르면 압축'},
+  {id:'s3',title:'생각을해봅시다',parent:'s1',ex:[['쌓인다는 게 나쁜 건 아니잖아. 압축 말고 다른 불편을 찾자','그럼 쌓인 걸 줄이는 대신, 다 쓴 맥락을 어떻게 끝내는지를 다뤄볼까요?'],['쓰레기봉투 묶어 버리듯, 줄을 매듭지으면 그 프로젝트가 끝나는 거야','줄을 묶어서 끝내는 걸로 정리할게요. 압축 안은 접어둘게요.']],decision:'줄을 묶어서 끝낸다',kills:'s2'}]},
  pf:{name:'포트폴리오',color:0xc9c6be,sessions:[
   {id:'p1',title:'첫 장 구성',parent:null,ex:[['포트폴리오 첫 장 뭐로 할지 고민돼','가장 자신 있는 작업 하나를 크게 여는 게 좋아요. 후보 작업을 알려주세요.']],decision:'대표작 하나로 연다'}]}};
 let G;
@@ -290,7 +291,7 @@ function drawGraph(p){
   draw();new ResizeObserver(draw).observe(sv);
 }
 function render(typing){drawNav();$('scr').classList.toggle('wide',!!(G.hung&&G.view===G.ended));
-  if(G.hung&&G.view===G.ended){bar('기록 보기','closed',DATA[G.view].name,'내가 고르고 버린 길이에요. AI는 더 이상 이걸 쓰지 않아요');drawGraph(G.view);return;}
+  if(G.hung&&G.view===G.ended){bar('기록 보기','closed',DATA[G.view].name,'이번 학기 실제 기록. 갈래 36개, 끝까지 이어진 판단 12개');if(G.view==='tui'){if(!body.querySelector('.rec'))body.innerHTML='<iframe class="rec" src="real.html?embed" title="TUI 과제 실제 기록 지도"></iframe>';}else drawGraph(G.view);return;}
   if(!G.view){bar('카드 없음','','','카드를 꽂으면 그 프로젝트 폴더가 열려요');body.innerHTML='<div class="empty">슬롯에 카드를 꽂아 주세요</div>';return;}
   const p=G.view,st=G.st[p];
   if(st==='closed'){bar('닫힘','closed',DATA[p].name,'묶어서 끝냈어요. AI는 이 맥락을 더 쓰지 않아요');body.innerHTML='<div class="empty">이 프로젝트는 끝났어요<br>뚫린 카드를 걸면 갈래를 볼 수 있어요</div>';return;}
@@ -345,7 +346,7 @@ B.bFlow.onclick=async()=>{
    ['다른 일을 하려면 슬라이더로 카드를 빼요. 폴더는 멈춘 채로 남아요',()=>slide()],
    ['포트폴리오 카드를 꽂아요. 이 폴더에는 TUI 이야기가 섞이지 않아요',async()=>{await insert('pf');await talk();}],
    ['다시 TUI 카드로 돌아와요. 세션들이 그대로 있어요',async()=>{await slide();await insert('tui');}],
-   ['형태 탐색의 결정으로 돌아가 다른 갈래를 열어요. 앞의 인터랙션 갈래는 버려져요',async()=>{await newSess();await talk();await talk();}],
+   ['첫 세션의 결정으로 돌아가 다른 갈래를 열어요. 앞의 압축 갈래는 버려져요',async()=>{await newSess();await talk();await talk();}],
    ['줄을 묶어 끝내요. 이 맥락은 AI 기억에서 빠지고 카드에 구멍이 뚫려 나와요',()=>knot()],
    ['카드를 걸면 내가 고르고 버리고 방향을 튼 길이 펼쳐져요',()=>hang()]];
   for(const [t,f] of steps){if(!auto)return;cap(t);await f();await wait(700);}
