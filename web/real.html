@@ -236,13 +236,13 @@ document.addEventListener('keydown',ev=>{if(ev.target.closest('input,textarea'))
 setZ(wrapEl.clientHeight/H);wrapEl.scrollLeft=0;wrapEl.scrollTop=0;
 
 const det=document.getElementById('detail');
-function show(id){const n=by[id];if(typeof focusChat==='function')focusChat(n.s);
+function show(id,keep){const n=by[id];if(!keep&&typeof focusChat==='function')focusChat(n.s);
   det.innerHTML=`<div class="meta"><div class="date">${n.date||''}</div><h2>${esc(n.title)}</h2>
   <span class="note">${(CHATS.find(c=>c.id===n.s)||{}).t||''}</span><br><span class="who ${n.who==='me'?'me':''}">${n.who==='me'?'내가 낸 것':'AI가 낸 것'}</span>
   <p class="dec"><em>${n.dead?'버린 이유':'판단'}</em>${esc(n.dec)}</p>${n.left?`<p class="dec"><em>knot.에 남긴 것</em>${esc(n.left)}</p>`:''}${n.note?`<p class="note">대화 원문이 남아 있지 않아 기록을 요약함</p>`:''}</div>
   <div class="chat">${n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')}</div>`;
   sv.querySelectorAll('.node .hit').forEach(r=>r.setAttribute('stroke','none'));
-  const h=sv.querySelector(`.node[data-id="${id}"] .hit`);h.setAttribute('stroke','var(--line)');}
+  const h=sv.querySelector(`.node[data-id="${id}"] .hit`);if(!keep)h.setAttribute('stroke','var(--line)');}
 sv.addEventListener('click',ev=>{const t=ev.target.closest('.node');if(t)show(t.dataset.id)});
 sv.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){const t=ev.target.closest('.node');if(t){ev.preventDefault();show(t.dataset.id)}}});
 
@@ -257,7 +257,7 @@ function showChat(cid){const c=CHATS.find(x=>x.id===cid),ns=N.filter(n=>n.s===ci
   det.innerHTML=`<div class="chathead"><h2>${esc(c.t)}</h2><span class="note">이 채팅에서 나온 갈래 ${ns.filter(n=>n.dead).length}개, 이어진 판단 ${ns.filter(n=>!n.dead).length}개</span></div>
   <div class="meta"><p class="dec"><em>노드를 누르면 그 부분만 볼 수 있음</em></p></div>
   <div class="chat">${ns.map(n=>`<div class="sep">${esc(n.title)}${n.dead?' (버림)':''}</div>`+n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')).join('')}</div>`;}
-const onSide=ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11');}else showChat(b.dataset.c);};ul.addEventListener('click',onSide);ul2.addEventListener('click',onSide);
+const onSide=ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11',true);setZ(ZMIN());wrapEl.scrollTo({left:0,top:0});}else showChat(b.dataset.c);};ul.addEventListener('click',onSide);ul2.addEventListener('click',onSide);
 show('t11');focusChat(null);
 </script>
 </body>
