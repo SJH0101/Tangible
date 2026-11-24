@@ -19,6 +19,8 @@ body{margin:0;background:var(--page);color:var(--ink);font:15px/1.6 "IBM Plex Sa
 header{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;padding:28px max(4vw,16px) 18px}
 h1{margin:0;font-weight:600;font-size:56px;line-height:.9;letter-spacing:-.04em}
 header p{margin:0 0 4px;color:var(--mute)}
+header .real{margin-left:auto;align-self:center;padding:8px 16px;border:1px solid var(--amber);border-radius:999px;color:var(--amber);text-decoration:none;font-size:14px}
+header .real:hover{background:var(--amber);color:#1a1205}
 .stage{display:grid;grid-template-columns:minmax(0,1fr) 580px;gap:0;margin:0 max(4vw,16px);border-radius:28px;overflow:hidden;background:var(--stage)}
 .view{position:relative;min-height:min(72vh,720px);background:radial-gradient(ellipse 60% 38% at 46% 82%,var(--floor),transparent 70%)}
 .view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
@@ -100,7 +102,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
-<header><h1>knot.</h1><p>줄을 묶어 AI와 한 일을 끝내고 돌아보는 디바이스</p></header>
+<header><h1>knot.</h1><p>줄을 묶어 AI와 한 일을 끝내고 돌아보는 디바이스</p><a class="real" href="real.html">이번 학기 실제 기록 보기</a></header>
 <main class="stage">
   <div class="view" id="view"><canvas id="c" aria-label="knot 디바이스 3D 모델"></canvas><div class="state" id="led"><i></i><span>대기 중</span></div><div class="hint">드래그해서 돌려보기, 스크롤해서 확대</div></div>
   <div class="side"><div class="laptop"><div class="lid"><div class="scr" id="scr">
