@@ -22,7 +22,7 @@ header a{margin-left:auto;color:var(--mute);font-size:14px}
 .legend svg{flex:none}
 .count{padding:0 max(4vw,16px) 14px;font-size:15px}
 .count b{color:var(--amber);font-weight:600}
-.mapwrap{margin:0 max(4vw,16px);border-radius:24px;background:var(--stage);overflow-x:auto;overflow-y:hidden}
+.mapwrap{border-radius:24px;background:var(--stage);overflow-x:auto;overflow-y:hidden}
 svg#map{display:block}
 .node{cursor:pointer}
 .node:focus{outline:none}
@@ -39,6 +39,23 @@ svg#map{display:block}
 .b.u{align-self:flex-end;background:var(--amber);color:#1a1205;border-bottom-right-radius:4px}
 .b.a{align-self:flex-start;background:var(--glass);border:1px solid var(--line);border-bottom-left-radius:4px}
 .note{color:var(--mute);font-size:13px}
+.wrap{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;margin:0 max(4vw,16px) 48px}
+.side{background:var(--stage);border-radius:24px;padding:20px 14px;align-self:start;position:sticky;top:16px}
+.proj{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:500;padding:4px 8px 12px}
+.side ul{list-style:none;margin:0 0 0 18px;padding:0 0 0 12px;border-left:1px solid var(--line)}
+.side li button{all:unset;box-sizing:border-box;display:block;width:100%;padding:9px 12px;border-radius:10px;font-size:15px;cursor:pointer;color:var(--ink)}
+.side li button:hover{background:var(--page)}
+.side li button.on{background:var(--page);box-shadow:inset 0 0 0 1px var(--line)}
+.side li button:focus-visible{outline:2px solid var(--amber)}
+.side li small{display:block;color:var(--mute);font-size:12px}
+.main .mapwrap,.main .detail{margin-left:0;margin-right:0}
+.main .detail{margin-bottom:0}
+.node.dim{opacity:.18}
+.edge.dim{opacity:.12}
+.chathead{grid-column:1/-1;display:flex;align-items:baseline;gap:12px;margin-bottom:-6px}
+.chathead h2{margin:0;font-size:20px}
+.sep{align-self:center;color:var(--mute);font-size:12px;margin:6px 0}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.side{position:static}}
 @media (max-width:760px){.detail{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -56,69 +73,76 @@ svg#map{display:block}
   <span><svg width="30" height="8"><path d="M0 4H30" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/></svg>버린 갈래</span>
 </div>
 <p class="count" id="count"></p>
-<div class="mapwrap"><svg id="map"></svg></div>
-<section class="detail" id="detail"></section>
+<div class="wrap">
+<aside class="side" aria-label="프로젝트와 채팅">
+  <div class="proj"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5h14M5 9h14M6 9v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/></svg>TUI</div>
+  <ul id="chats"></ul>
+</aside>
+<div class="main"><div class="mapwrap"><svg id="map"></svg></div>
+<section class="detail" id="detail"></section></div>
+</div>
 <script>
 // who: me = 내가 냄, ai = AI가 냄 / dead: 버린 갈래
 const N=[
-{id:'t0',date:'10월 중순',title:'AI 맥락이 쌓이는 걸 다루자',who:'me',dec:'쌓이면 변하고, 떼면 README, 붙이면 새 세션',
+{id:'t0',s:'c1',date:'10월 중순',title:'AI 맥락이 쌓이는 걸 다루자',who:'me',dec:'쌓이면 변하고, 떼면 README, 붙이면 새 세션',
  chat:[['u','AI 컨텍스트가 쌓이는 걸 TUI로 내고 싶어. 작업할수록 뭔가 변하고, 뚝 떼면 README가 나오고, 그걸 다른 데 붙이면 새 세션이 시작되는 느낌'],['a','구조만 보면 mediaBlocks랑 거의 같아. 담아서 옮기는 것만으로는 약해']]},
-{id:'b1',p:'t0',dead:1,title:'카세트',who:'ai',dec:'표절 같아서 버림',chat:[['a','메인은 Context Cassette. 감길수록 릴이 두꺼워지고, 끊은 조각이 README야'],['u','카세트는 표절이잖아']]},
-{id:'b2',p:'t0',dead:1,title:'지층, 반죽, 씨앗',who:'ai',dec:'은유가 너무 많아서 버림',chat:[['a','메인을 지층 기둥으로 올리자. 시추 코어를 뽑는 게 인수인계야'],['u','별로야. 너무 메타포라 짜침']]},
-{id:'b3',p:'t0',dead:1,title:'무거워지는 블록, 감열지',who:'ai',dec:'숫자 하나를 물성으로 바꾼 것뿐이라 버림',chat:[['a','쌓일수록 독의 자력이 세져서 블록이 점점 안 떨어지는 건 어때'],['u','만들 순 있는데 너무 별로야. 컨셉이 단편적인 느낌']]},
-{id:'t1',p:'t0',date:'10월 중순',title:'체감이 안 되는 게 문제',who:'me',dec:'얼마나 쌓였는지 몰라서 채팅이 꽉 찰 때까지 씀',
+{id:'b1',s:'c1',p:'t0',dead:1,title:'카세트',who:'ai',dec:'표절 같아서 버림',chat:[['a','메인은 Context Cassette. 감길수록 릴이 두꺼워지고, 끊은 조각이 README야'],['u','카세트는 표절이잖아']]},
+{id:'b2',s:'c1',p:'t0',dead:1,title:'지층, 반죽, 씨앗',who:'ai',dec:'은유가 너무 많아서 버림',chat:[['a','메인을 지층 기둥으로 올리자. 시추 코어를 뽑는 게 인수인계야'],['u','별로야. 너무 메타포라 짜침']]},
+{id:'b3',s:'c1',p:'t0',dead:1,title:'무거워지는 블록, 감열지',who:'ai',dec:'숫자 하나를 물성으로 바꾼 것뿐이라 버림',chat:[['a','쌓일수록 독의 자력이 세져서 블록이 점점 안 떨어지는 건 어때'],['u','만들 순 있는데 너무 별로야. 컨셉이 단편적인 느낌']]},
+{id:'t1',s:'c1',p:'t0',date:'10월 중순',title:'체감이 안 되는 게 문제',who:'me',dec:'얼마나 쌓였는지 몰라서 채팅이 꽉 찰 때까지 씀',
  chat:[['u','세션이 지날수록 컨텍스트를 자주 비워줘야 토큰이 절약되는데, 얼마나 쌓이는지 체감이 안 돼서 정신없이 쓰다가 채팅이 꽉 찬 적이 있었어'],['a','정보가 없는 게 아니라 몰입 중에 안 느껴지는 게 문제네. 그게 TUI로 갈 이유가 돼']]},
-{id:'b4',p:'t1',dead:1,title:'무거워지는 Enter 키',who:'ai',dec:'손에만 있고 눈에 안 보여서 버림',chat:[['a','쌓일수록 Enter 키가 뻑뻑해지고, 키캡을 뽑으면 README'],['u','시야에서 막 움직이고 진짜 만져서 느낄 수 있는 거면 좋겠어']]},
-{id:'b5',p:'t1',dead:1,title:'손목 받침, 끈적한 마우스',who:'ai',dec:'같은 이유로 버림',chat:[['a','타이핑할 때 손목이 닿는 패드가 서서히 부풀어'],['u','시야에서 움직이는 게 좋아']]},
-{id:'t2',p:'t1',date:'10월 중순',title:'보이고 만져지는 것',who:'me',dec:'시야에서 움직이고 손으로 직접 만지는 물건',
+{id:'b4',s:'c1',p:'t1',dead:1,title:'무거워지는 Enter 키',who:'ai',dec:'손에만 있고 눈에 안 보여서 버림',chat:[['a','쌓일수록 Enter 키가 뻑뻑해지고, 키캡을 뽑으면 README'],['u','시야에서 막 움직이고 진짜 만져서 느낄 수 있는 거면 좋겠어']]},
+{id:'b5',s:'c1',p:'t1',dead:1,title:'손목 받침, 끈적한 마우스',who:'ai',dec:'같은 이유로 버림',chat:[['a','타이핑할 때 손목이 닿는 패드가 서서히 부풀어'],['u','시야에서 움직이는 게 좋아']]},
+{id:'t2',s:'c1',p:'t1',date:'10월 중순',title:'보이고 만져지는 것',who:'me',dec:'시야에서 움직이고 손으로 직접 만지는 물건',
  chat:[['u','뭔가 시야에 막 움직이고 진짜 만져서 느낄 수 있는 거면 좋겠어']]},
-{id:'b6',p:'t2',dead:1,title:'솟는 핀, 자라는 기둥',who:'ai',dec:'MIT 핀 디스플레이 같아서 버림',chat:[['a','작은 핀 격자가 주제별로 솟아오르는 서브 컨셉'],['u','MIT Media Lab처럼 네모 박스가 올라오는 건 진부해']]},
-{id:'b7',p:'t2',dead:1,title:'상어비늘',who:'me',dec:'물통으로 넘어가며 버림',left:'손으로 쓸어서 정리하기',chat:[['u','노트북 옆에 디바이스를 붙이고, 위가 상어비늘이라 점점 솟는 거야. 쓰다듬어 주면 내려가면서 촉감이 바뀌고. 에이전트를 쓰다듬어 주는 느낌'],['a','지금까지 나온 것 중에 제일 나아']]},
-{id:'b8',p:'t2',dead:1,title:'파도 판, 육각 링',who:'me',dec:'형태만 보면 흔한 장난감이라 버림',left:'꾹 누르면 압축',chat:[['u','이건 어때'],['a','겹겹이 들어가는 육각 링이지? 솟은 걸 손바닥으로 꾹 누르면 납작해지는 게 설명 없이 느껴져. 다만 흔한 피젯 장난감이라 새로움이 약해']]},
-{id:'t3',p:'t2',date:'10월 21일',title:'누르면 압축',who:'me',dec:'쌓이면 펴지고, 누르면 줄어듦',
+{id:'b6',s:'c1',p:'t2',dead:1,title:'솟는 핀, 자라는 기둥',who:'ai',dec:'MIT 핀 디스플레이 같아서 버림',chat:[['a','작은 핀 격자가 주제별로 솟아오르는 서브 컨셉'],['u','MIT Media Lab처럼 네모 박스가 올라오는 건 진부해']]},
+{id:'b7',s:'c1',p:'t2',dead:1,title:'상어비늘',who:'me',dec:'물통으로 넘어가며 버림',left:'손으로 쓸어서 정리하기',chat:[['u','노트북 옆에 디바이스를 붙이고, 위가 상어비늘이라 점점 솟는 거야. 쓰다듬어 주면 내려가면서 촉감이 바뀌고. 에이전트를 쓰다듬어 주는 느낌'],['a','지금까지 나온 것 중에 제일 나아']]},
+{id:'b8',s:'c1',p:'t2',dead:1,title:'파도 판, 육각 링',who:'me',dec:'형태만 보면 흔한 장난감이라 버림',left:'꾹 누르면 압축',chat:[['u','이건 어때'],['a','겹겹이 들어가는 육각 링이지? 솟은 걸 손바닥으로 꾹 누르면 납작해지는 게 설명 없이 느껴져. 다만 흔한 피젯 장난감이라 새로움이 약해']]},
+{id:'t3',s:'c2',p:'t2',date:'10월 21일',title:'누르면 압축',who:'me',dec:'쌓이면 펴지고, 누르면 줄어듦',
  chat:[['u','컨셉이 바뀌었어. 물통이 위로 펴지고, 누르면 압축되고, 층마다 카드가 있어서 그 카드를 위에 올리면 그 맥락으로 작업하는 느낌']]},
-{id:'b9',p:'t3',dead:1,title:'접이식 물통',who:'me',dec:'오리가미로 넘어가며 버림',left:'층마다 카드',chat:[['u','물통이 위로 펴지면서 그걸 누르면 압축, 물통 층마다 카드가 있어'],['a','비늘보다 나아. 층이 있어서 정보 구조가 물리적으로 드러나']]},
-{id:'b10',p:'t3',dead:1,title:'층을 나누는 기준',who:'ai',dec:'한 채팅 안에서는 성립하지 않아서 버림',chat:[['a','층은 작업 단위로 나누고, 다 쓴 층은 누르고 중요한 층은 잡고 지키자'],['u','지저분해. 잡고 지키고 이런 거 말고'],['u','애초에 한 채팅 안인데 이게 성립이 안 돼']]},
-{id:'t4',p:'t3',date:'10월 21일',title:'쓸데없는 걸 빼고 싶다',who:'me',dec:'AI가 옛날 테마를 끌고 오는 게 진짜 문제',
+{id:'b9',s:'c2',p:'t3',dead:1,title:'접이식 물통',who:'me',dec:'오리가미로 넘어가며 버림',left:'층마다 카드',chat:[['u','물통이 위로 펴지면서 그걸 누르면 압축, 물통 층마다 카드가 있어'],['a','비늘보다 나아. 층이 있어서 정보 구조가 물리적으로 드러나']]},
+{id:'b10',s:'c2',p:'t3',dead:1,title:'층을 나누는 기준',who:'ai',dec:'한 채팅 안에서는 성립하지 않아서 버림',chat:[['a','층은 작업 단위로 나누고, 다 쓴 층은 누르고 중요한 층은 잡고 지키자'],['u','지저분해. 잡고 지키고 이런 거 말고'],['u','애초에 한 채팅 안인데 이게 성립이 안 돼']]},
+{id:'t4',s:'c2',p:'t3',date:'10월 21일',title:'쓸데없는 걸 빼고 싶다',who:'me',dec:'AI가 옛날 테마를 끌고 오는 게 진짜 문제',
  chat:[['u','대화가 길어지면 옛날에 했던 쓸데없는 얘기를 갑자기 끌고 오는 게 짜증 나. 컴팩트는 언제 해야 할지 모르겠고, 안 해도 돌아가니까 귀찮고, 하면 손해 보는 느낌이야'],['a','이제 문제가 선명해졌다']]},
-{id:'b11',p:'t4',dead:1,title:'옆에서 누르기, 링 돌리기',who:'ai',dec:'층 선택이 손에 안 남아서 버림',chat:[['a','접고 싶은 층을 옆에서 엄지로 밀어 넣거나, 링을 돌려서 잠금을 푸는 방식'],['u','층을 선택하는 과정이 있으면 그 층만 기계적으로 접히게 막는 거지']]},
-{id:'b12',p:'t4',dead:1,title:'슬라이드 딸깍',who:'me',dec:'층 구조가 빠지며 버림',left:'옆 슬라이더',chat:[['u','물리적인 슬라이드 딸깍은 어때? 슬라이드를 밀면 뭔가 삐져나와'],['a','딸깍 하는 손맛이 "선택했다"는 확인이 돼서 화면 피드백이 필요 없어']]},
-{id:'b13',p:'t4',dead:1,title:'크레슬링 종이 탑',who:'me',dec:'실제로 안 접혀서 버림',left:'답할 때 빛나는 면',note:'기록 요약',chat:[['n','사각 크레슬링 종이 탑. AI가 답할 때마다 앞면 하나가 빛나고, 마음에 안 들면 그 면을 톡 쳐서 do-not에 넣음'],['n','종이가 실제로 안 접혀서 물감통과 달항아리를 거쳤다가 다시 크레슬링으로 돌아감']]},
-{id:'b14',p:'t4',dead:1,title:'물감통, 달항아리',who:'me',dec:'오리가미가 낫다고 보고 버림',note:'기록 요약',chat:[['n','접이식 물감 물통의 사각형 버전, 달항아리와 콜라병 같은 유기형까지 시도했지만 "오리가미가 제일 낫다"로 돌아감']]},
-{id:'t5',p:'t4',date:'10월 22일',title:'중간발표 crease',who:'me',dec:'Grows as you talk. Compacts when pressed.',
+{id:'b11',s:'c2',p:'t4',dead:1,title:'옆에서 누르기, 링 돌리기',who:'ai',dec:'층 선택이 손에 안 남아서 버림',chat:[['a','접고 싶은 층을 옆에서 엄지로 밀어 넣거나, 링을 돌려서 잠금을 푸는 방식'],['u','층을 선택하는 과정이 있으면 그 층만 기계적으로 접히게 막는 거지']]},
+{id:'b12',s:'c2',p:'t4',dead:1,title:'슬라이드 딸깍',who:'me',dec:'층 구조가 빠지며 버림',left:'옆 슬라이더',chat:[['u','물리적인 슬라이드 딸깍은 어때? 슬라이드를 밀면 뭔가 삐져나와'],['a','딸깍 하는 손맛이 "선택했다"는 확인이 돼서 화면 피드백이 필요 없어']]},
+{id:'b13',s:'c2',p:'t4',dead:1,title:'크레슬링 종이 탑',who:'me',dec:'실제로 안 접혀서 버림',left:'답할 때 빛나는 면',note:'기록 요약',chat:[['n','사각 크레슬링 종이 탑. AI가 답할 때마다 앞면 하나가 빛나고, 마음에 안 들면 그 면을 톡 쳐서 do-not에 넣음'],['n','종이가 실제로 안 접혀서 물감통과 달항아리를 거쳤다가 다시 크레슬링으로 돌아감']]},
+{id:'b14',s:'c2',p:'t4',dead:1,title:'물감통, 달항아리',who:'me',dec:'오리가미가 낫다고 보고 버림',note:'기록 요약',chat:[['n','접이식 물감 물통의 사각형 버전, 달항아리와 콜라병 같은 유기형까지 시도했지만 "오리가미가 제일 낫다"로 돌아감']]},
+{id:'t5',s:'c3',p:'t4',date:'10월 22일',title:'중간발표 crease',who:'me',dec:'Grows as you talk. Compacts when pressed.',
  chat:[['u','Grows as you talk. Compacts when pressed. 마지막 대사 이렇게 바꿔줄래'],['a','compact에 눌려서 납작해진다는 뜻과 맥락 압축이 같이 들어 있어서 더 좋아']]},
-{id:'b15',p:'t5',dead:1,title:'진공 오리가미, 공압',who:'ai',dec:'형태부터 바꾸기로 해서 버림',chat:[['a','공압으로 가면 크레슬링을 비닐에 넣고 진공으로 접는 방법이 있어'],['u','크레슬링을 버리고, 컨셉은 유지하되 형태를 확 바꾸고 싶어']]},
-{id:'b16',p:'t5',dead:1,title:'손목 받침, 바닥 막, 튜브',who:'ai',dec:'진행 안 함',chat:[['a','형태를 확 바꾸려면 위치랑 축부터 바꿔야 해. 키보드 앞 손목 받침 자체가 디바이스야'],['u','음 다 별론데']]},
-{id:'t6',p:'t5',date:'11월 16일',title:'인터랙션은 그대로',who:'me',dec:'중간발표 구조는 두고 형태만 다시',
+{id:'b15',s:'c5',p:'t5',dead:1,title:'진공 오리가미, 공압',who:'ai',dec:'형태부터 바꾸기로 해서 버림',chat:[['a','공압으로 가면 크레슬링을 비닐에 넣고 진공으로 접는 방법이 있어'],['u','크레슬링을 버리고, 컨셉은 유지하되 형태를 확 바꾸고 싶어']]},
+{id:'b16',s:'c5',p:'t5',dead:1,title:'손목 받침, 바닥 막, 튜브',who:'ai',dec:'진행 안 함',chat:[['a','형태를 확 바꾸려면 위치랑 축부터 바꿔야 해. 키보드 앞 손목 받침 자체가 디바이스야'],['u','음 다 별론데']]},
+{id:'t6',s:'c5',p:'t5',date:'11월 16일',title:'인터랙션은 그대로',who:'me',dec:'중간발표 구조는 두고 형태만 다시',
  chat:[['a','형태는 아무것도 닮지 않은 추상 오브제로 가자'],['u','근데 우리 거 중간에 잘 엮어놨잖아'],['a','맞아, 내가 헛짚었어. 인터랙션은 그대로 두고 형태만 바꾸면 되는 거였어']]},
-{id:'b17',p:'t6',dead:1,title:'조개, 돛, 나팔, 가오리',who:'ai',dec:'뻔하거나 물리적으로 불가능해서 버림',chat:[['a','스케치에서 조개형으로 가자'],['u','조개 벌어지는 뻔한 거 하지 말라고'],['u','물리적으로 불가능하잖아']]},
-{id:'b18',p:'t6',dead:1,title:'스케치 17종',who:'me',dec:'렌더로 비교했지만 전부 버림',chat:[['u','스케치 하나당 한 개씩 다 만들어봐'],['a','17개 뽑았어. 7번 겹친 잎을 밀어'],['u','behance나 레드닷처럼 진짜 지리는 폼팩터가 나와야 되는데']]},
-{id:'b19',p:'t6',dead:1,title:'블레이드 부채, 줄자',who:'ai',dec:'진행 안 함',chat:[['a','얇은 알루미늄 날이 답마다 한 장씩 부채처럼 펼쳐져'],['u','너무 뻔해. 스크래칭, 찢기, 흔들기 같은 인터랙션이 기깔나게 들어가야 돼']]},
-{id:'b20',p:'t6',dead:1,title:'감열지, 서류 탁탁',who:'ai',dec:'종이 자체가 싫어서 버림',chat:[['a','감열지는 긁으면 실제로 까맣게 변해서, 긁기가 그대로 do-not이 돼'],['u','싫은데. 종이를 뭐 한다는 자체가']]},
-{id:'b21',p:'t6',dead:1,title:'스팽글, 지퍼, 낙서판',who:'ai',dec:'이미 있는 재료를 빌려온 거라 버림',chat:[['a','손으로 쓸면 색이 뒤집히는 스팽글 원단'],['u','스팽글은 싫어'],['u','지퍼도 싫어']]},
-{id:'b22',p:'t6',dead:1,title:'배 침몰, U자 프레임',who:'me',dec:'뼈다구 같아서 버림',note:'기록 요약',chat:[['n','U자 프레임이 흔들리다가 손으로 쓸면 가라앉으면서 구명정 내리듯 카드가 미끄러져 나오는 형태'],['n','"뼈다구 같고 절제의 미가 없다"로 접음']]},
-{id:'b23',p:'t6',dead:1,title:'반구, 기우는 직육면체',who:'me',dec:'경사면 몸체로 넘어가며 버림',note:'기록 요약',chat:[['n','반구에서 직육면체가 면이 갈라지듯 기울어지는 미니멀한 오브제']]},
-{id:'b24',p:'t6',dead:1,title:'화병, Z 몸체',who:'me',dec:'반달 원판으로 넘어가며 버림',note:'기록 요약',chat:[['n','화병 실루엣에 리니어 액추에이터로 반달이 솟는 안, 유기적인 Z로 꺾은 몸체까지 시도']]},
-{id:'b25',p:'t6',dead:1,title:'반달 원판 박스',who:'me',dec:'11월 17일 미팅 뒤 접음',left:'걸리면 곡선 따라 빛남',chat:[['u','반달 안쪽이 살짝 잘려 있어. 그 사이로 석양을 보는 느낌이랄까'],['u','원판에 붙은 손잡이가 찰칵 걸리는 바디 쪽에 곡선 따라 LED가 있는 형식'],['u','손잡이 부분에 몸체를 오목하게 파서 탁 걸리게 해줘']]},
-{id:'t7',p:'t6',date:'11월 18일',title:'쌓이는 건 나쁜 게 아니다',who:'me',dec:'압축 컨셉에서 벗어나 다른 불편을 찾음',note:'기록 요약',
+{id:'b17',s:'c5',p:'t6',dead:1,title:'조개, 돛, 나팔, 가오리',who:'ai',dec:'뻔하거나 물리적으로 불가능해서 버림',chat:[['a','스케치에서 조개형으로 가자'],['u','조개 벌어지는 뻔한 거 하지 말라고'],['u','물리적으로 불가능하잖아']]},
+{id:'b18',s:'c5',p:'t6',dead:1,title:'스케치 17종',who:'me',dec:'렌더로 비교했지만 전부 버림',chat:[['u','스케치 하나당 한 개씩 다 만들어봐'],['a','17개 뽑았어. 7번 겹친 잎을 밀어'],['u','behance나 레드닷처럼 진짜 지리는 폼팩터가 나와야 되는데']]},
+{id:'b19',s:'c5',p:'t6',dead:1,title:'블레이드 부채, 줄자',who:'ai',dec:'진행 안 함',chat:[['a','얇은 알루미늄 날이 답마다 한 장씩 부채처럼 펼쳐져'],['u','너무 뻔해. 스크래칭, 찢기, 흔들기 같은 인터랙션이 기깔나게 들어가야 돼']]},
+{id:'b20',s:'c5',p:'t6',dead:1,title:'감열지, 서류 탁탁',who:'ai',dec:'종이 자체가 싫어서 버림',chat:[['a','감열지는 긁으면 실제로 까맣게 변해서, 긁기가 그대로 do-not이 돼'],['u','싫은데. 종이를 뭐 한다는 자체가']]},
+{id:'b21',s:'c5',p:'t6',dead:1,title:'스팽글, 지퍼, 낙서판',who:'ai',dec:'이미 있는 재료를 빌려온 거라 버림',chat:[['a','손으로 쓸면 색이 뒤집히는 스팽글 원단'],['u','스팽글은 싫어'],['u','지퍼도 싫어']]},
+{id:'b22',s:'c5',p:'t6',dead:1,title:'배 침몰, U자 프레임',who:'me',dec:'뼈다구 같아서 버림',note:'기록 요약',chat:[['n','U자 프레임이 흔들리다가 손으로 쓸면 가라앉으면서 구명정 내리듯 카드가 미끄러져 나오는 형태'],['n','"뼈다구 같고 절제의 미가 없다"로 접음']]},
+{id:'b23',s:'c5',p:'t6',dead:1,title:'반구, 기우는 직육면체',who:'me',dec:'경사면 몸체로 넘어가며 버림',note:'기록 요약',chat:[['n','반구에서 직육면체가 면이 갈라지듯 기울어지는 미니멀한 오브제']]},
+{id:'b24',s:'c5',p:'t6',dead:1,title:'화병, Z 몸체',who:'me',dec:'반달 원판으로 넘어가며 버림',note:'기록 요약',chat:[['n','화병 실루엣에 리니어 액추에이터로 반달이 솟는 안, 유기적인 Z로 꺾은 몸체까지 시도']]},
+{id:'b25',s:'c4',p:'t6',dead:1,title:'반달 원판 박스',who:'me',dec:'11월 17일 미팅 뒤 접음',left:'걸리면 곡선 따라 빛남',chat:[['u','반달 안쪽이 살짝 잘려 있어. 그 사이로 석양을 보는 느낌이랄까'],['u','원판에 붙은 손잡이가 찰칵 걸리는 바디 쪽에 곡선 따라 LED가 있는 형식'],['u','손잡이 부분에 몸체를 오목하게 파서 탁 걸리게 해줘']]},
+{id:'t7',s:'c5',p:'t6',date:'11월 18일',title:'쌓이는 건 나쁜 게 아니다',who:'me',dec:'압축 컨셉에서 벗어나 다른 불편을 찾음',note:'기록 요약',
  chat:[['n','"쌓인다는 게 나쁜 건 아니다"라고 보고 압축 컨셉에서 벗어남'],['n','솟는 것보다 정형에서 비정형으로 가는 변화, 무게중심이 바뀌는 게 더 매력적이라고 봄']]},
-{id:'b26',p:'t7',dead:1,title:'내 맥락을 담은 기기',who:'ai',dec:'문제의식이 약해서 접음',note:'기록 요약',chat:[['n','맥락이 노트북이 아니라 오브제 안에 쌓이고, 어느 AI 옆에 두든 그 맥락으로 이어가는 방향']]},
-{id:'b27',p:'t7',dead:1,title:'텐세그리티 오브제',who:'me',dec:'진행 안 함',note:'기록 요약',chat:[['n','말랑하면서 딱딱한 부분이 있는 오브제. 줄보다는 평면적이고 공간적인 구성을 원함']]},
-{id:'b28',p:'t7',dead:1,title:'맞장구 오브제',who:'me',dec:'은유가 억지 같아서 접음',note:'기록 요약',chat:[['n','AI가 맞장구칠수록 오브제가 사용자 쪽으로 기울고, 손으로 수평을 맞추면 입장을 뺀 답을 받는 아이디어'],['n','지렛대, 휘는 판, 절하는 신하 같은 은유가 "억지 끼워맞춤 같다"로 접음']]},
-{id:'b29',p:'t7',dead:1,title:'삼각기둥, 사각기둥',who:'me',dec:'손으로 돌리기 어려워서 버림',note:'기록 요약',chat:[['n','정삼각기둥 빗면을 따라 사각기둥이 기울어 붙은 형태. 손으로 돌리기 어렵다고 봄']]},
-{id:'t8',p:'t7',date:'11월 23일',title:'AI를 개인 데이터로',who:'me',dec:'고칠 대상이 아니라 일상 사물과 개인 기록으로',note:'기록 요약',
+{id:'b26',s:'c5',p:'t7',dead:1,title:'내 맥락을 담은 기기',who:'ai',dec:'문제의식이 약해서 접음',note:'기록 요약',chat:[['n','맥락이 노트북이 아니라 오브제 안에 쌓이고, 어느 AI 옆에 두든 그 맥락으로 이어가는 방향']]},
+{id:'b27',s:'c5',p:'t7',dead:1,title:'텐세그리티 오브제',who:'me',dec:'진행 안 함',note:'기록 요약',chat:[['n','말랑하면서 딱딱한 부분이 있는 오브제. 줄보다는 평면적이고 공간적인 구성을 원함']]},
+{id:'b28',s:'c5',p:'t7',dead:1,title:'맞장구 오브제',who:'me',dec:'은유가 억지 같아서 접음',note:'기록 요약',chat:[['n','AI가 맞장구칠수록 오브제가 사용자 쪽으로 기울고, 손으로 수평을 맞추면 입장을 뺀 답을 받는 아이디어'],['n','지렛대, 휘는 판, 절하는 신하 같은 은유가 "억지 끼워맞춤 같다"로 접음']]},
+{id:'b29',s:'c5',p:'t7',dead:1,title:'삼각기둥, 사각기둥',who:'me',dec:'손으로 돌리기 어려워서 버림',note:'기록 요약',chat:[['n','정삼각기둥 빗면을 따라 사각기둥이 기울어 붙은 형태. 손으로 돌리기 어렵다고 봄']]},
+{id:'t8',s:'c5',p:'t7',date:'11월 23일',title:'AI를 개인 데이터로',who:'me',dec:'고칠 대상이 아니라 일상 사물과 개인 기록으로',note:'기록 요약',
  chat:[['n','교수님 연구 관점(개인 데이터, 일상 사물)에서 AI를 새로운 개인 데이터와 경험으로 보기로 함']]},
-{id:'t9',p:'t8',date:'11월 23일',title:'끝내는 건 손으로',who:'me',dec:'줄을 묶어서 AI 프로젝트를 끝낸다',note:'기록 요약',
+{id:'t9',s:'c5',p:'t8',date:'11월 23일',title:'끝내는 건 손으로',who:'me',dec:'줄을 묶어서 AI 프로젝트를 끝낸다',note:'기록 요약',
  chat:[['n','쓰레기봉투 묶어 버리듯, 디바이스에 달린 줄을 매듭지으면 카드가 나오는 컨셉. 이름은 knot']]},
-{id:'b30',p:'t9',dead:1,title:'흰 줄',who:'me',dec:'검정이 나아서 버림',chat:[['u','검정 선 말고 흰 선으로 하는 게 좋을 듯'],['u','검정이 나은 듯']]},
-{id:'b31',p:'t9',dead:1,title:'카드 주머니 파기',who:'ai',dec:'파는 건 안 예뻐서 버림',chat:[['a','몸체에 주머니를 파서 카드를 넣는 안'],['u','파는 건 진짜 안 예쁨. 차라리 처음이 괜찮은데']]},
-{id:'b32',p:'t9',dead:1,title:'대화 단위 카드',who:'me',dec:'프로젝트 단위가 맞아서 버림',chat:[['u','프로젝트보다 대화가 더 좋지 않나'],['u','근데 프로젝트는 따로 파일로 관리해서 그 안을 볼 수가 없잖아']]},
-{id:'t10',p:'t9',date:'11월 23일',title:'카드는 프로젝트 폴더',who:'me',dec:'꽂으면 폴더, 슬라이더로 전환, 걸면 돌아보기',
+{id:'b30',s:'c5',p:'t9',dead:1,title:'흰 줄',who:'me',dec:'검정이 나아서 버림',chat:[['u','검정 선 말고 흰 선으로 하는 게 좋을 듯'],['u','검정이 나은 듯']]},
+{id:'b31',s:'c5',p:'t9',dead:1,title:'카드 주머니 파기',who:'ai',dec:'파는 건 안 예뻐서 버림',chat:[['a','몸체에 주머니를 파서 카드를 넣는 안'],['u','파는 건 진짜 안 예쁨. 차라리 처음이 괜찮은데']]},
+{id:'b32',s:'c5',p:'t9',dead:1,title:'대화 단위 카드',who:'me',dec:'프로젝트 단위가 맞아서 버림',chat:[['u','프로젝트보다 대화가 더 좋지 않나'],['u','근데 프로젝트는 따로 파일로 관리해서 그 안을 볼 수가 없잖아']]},
+{id:'t10',s:'c5',p:'t9',date:'11월 23일',title:'카드는 프로젝트 폴더',who:'me',dec:'꽂으면 폴더, 슬라이더로 전환, 걸면 돌아보기',
  chat:[['u','카드를 꽂으면 프로젝트 폴더가 형성되는 건 어때'],['u','옆에 슬라이더를 조그맣게 넣고, 뚫린 카드를 구멍에 걸면 그 맥락이 딱 보이게']]},
-{id:'b33',p:'t10',dead:1,title:'지금 프로젝트로 가져오기',who:'me',dec:'보기만 하는 게 맞아서 버림',chat:[['u','프로젝트를 끝냈지만 여기서 했던 흐름을 다른 프로젝트에 가져오고 싶을 때 하는 거지'],['u','근데 굳이 지금 프로젝트로 넘어와야 될까. 그 순간의 기억을 볼 수만 있게 하면 안 될까']]},
-{id:'t11',p:'t10',date:'11월 24일',title:'knot.',who:'me',dec:'끝난 맥락은 닫고, 내가 한 판단은 돌아본다',
+{id:'b33',s:'c5',p:'t10',dead:1,title:'지금 프로젝트로 가져오기',who:'me',dec:'보기만 하는 게 맞아서 버림',chat:[['u','프로젝트를 끝냈지만 여기서 했던 흐름을 다른 프로젝트에 가져오고 싶을 때 하는 거지'],['u','근데 굳이 지금 프로젝트로 넘어와야 될까. 그 순간의 기억을 볼 수만 있게 하면 안 될까']]},
+{id:'t11',s:'c5',p:'t10',date:'11월 24일',title:'knot.',who:'me',dec:'끝난 맥락은 닫고, 내가 한 판단은 돌아본다',
  chat:[['u','이 프로젝트에 마침표를 찍고 돌아보게 하는 거지. AI랑 어떻게 대화해서 했는지 보면서, AI 시대에 내가 한 게 없는 것 같은 느낌을 줄여주는'],['u','맥락의 마무리랑 이거를 합쳐야 강한 컨셉이 될 거야'],['u','knot, dot. 비슷하네']]}
 ];
+const CHATS=[{id:'c4',t:'블렌더 컨셉 렌더링'},{id:'c5',t:'생각을해봅시다'},{id:'c3',t:'Figma 디자인 수정'},{id:'c2',t:'중간발표 주제'},{id:'c1',t:'AI context TUI concept'}];
 const by={};N.forEach(n=>{by[n.id]=n;n.kids=[]});N.forEach(n=>{if(n.p)by[n.p].kids.push(n)});
 // layout: trunk on row 0, dead branches fan above/below
 const place=(n,c)=>{n.c=c;n.r=0;const dk=n.kids.filter(k=>k.dead);const per=4,span=Math.ceil(dk.length/per);
@@ -136,13 +160,13 @@ const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const wrap=(t,m)=>{const w=t.split(' '),o=[];let c='';for(const k of w){if(c&&(c+' '+k).length>m){o.push(c);c=k}else c=c?c+' '+k:k}if(c)o.push(c);return o};
 let e='',g='';
 for(const n of N){if(!n.p)continue;const p=by[n.p],x1=X(p),y1=Y(p),x2=X(n),y2=Y(n);
-  if(n.dead){const fx=x2-16;e+=`<path d="M${fx} ${y1}C${fx+CW*.1} ${y1},${x2-CW*.06} ${y2},${x2} ${y2}" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="4 4" opacity=".7"/>`;}
-  else e+=`<path d="M${x1} ${y1}H${x2}" stroke="#f2a114" stroke-width="3"/>`;}
+  if(n.dead){const fx=x2-16;e+=`<path class="edge" data-s="${n.s}" d="M${fx} ${y1}C${fx+CW*.1} ${y1},${x2-CW*.06} ${y2},${x2} ${y2}" fill="none" stroke="var(--mute)" stroke-width="1.6" stroke-dasharray="4 4" opacity=".7"/>`;}
+  else e+=`<path class="edge" data-s="${n.s}" d="M${x1} ${y1}H${x2}" stroke="#f2a114" stroke-width="3"/>`;}
 for(const n of N){const x=X(n),y=Y(n),mine=n.who==='me';
   const dot=mine?`<circle cx="${x}" cy="${y}" r="${n.dead?6:8}" fill="${n.dead?'var(--mute)':'#f2a114'}"/>`:`<circle cx="${x}" cy="${y}" r="6" fill="var(--stage)" stroke="${n.dead?'var(--mute)':'var(--ink)'}" stroke-width="2"/>`;
   const tc=n.dead?'var(--mute)':'var(--ink)';
   const lines=wrap(n.dec,n.dead?15:13);
-  g+=`<g class="node" tabindex="0" role="button" aria-label="${esc(n.title)}" data-id="${n.id}">
+  g+=`<g class="node" data-s="${n.s}" tabindex="0" role="button" aria-label="${esc(n.title)}" data-id="${n.id}">
   <rect class="hit" x="${x-14}" y="${y-46}" width="${CW*0.6}" height="${46+20+lines.length*17+(n.left?16:0)}" fill="transparent" rx="8"/>
   ${dot}
   <text x="${x-4}" y="${y-14}" font-size="14" font-weight="600" fill="${tc}" ${n.dead?'text-decoration="line-through"':''}>${esc(n.title)}</text>
@@ -150,15 +174,27 @@ for(const n of N){const x=X(n),y=Y(n),mine=n.who==='me';
   <text y="${y+24}" font-size="12" fill="${n.dead?'var(--mute)':'#f2a114'}">${lines.map((l,i)=>`<tspan x="${x-4}" dy="${i?16:0}">${esc(l)}</tspan>`).join('')}</text>${n.left?`<text x="${x-4}" y="${y+28+lines.length*16}" font-size="12" font-weight="600" fill="#f2a114">남김: ${esc(n.left)}</text>`:''}</g>`;}
 sv.innerHTML=e+g;
 const det=document.getElementById('detail');
-function show(id){const n=by[id];
+function show(id){const n=by[id];if(typeof focusChat==='function')focusChat(n.s);
   det.innerHTML=`<div class="meta"><div class="date">${n.date||''}</div><h2>${esc(n.title)}</h2>
-  <span class="who ${n.who==='me'?'me':''}">${n.who==='me'?'내가 낸 것':'AI가 낸 것'}</span>
+  <span class="note">${(CHATS.find(c=>c.id===n.s)||{}).t||''}</span><br><span class="who ${n.who==='me'?'me':''}">${n.who==='me'?'내가 낸 것':'AI가 낸 것'}</span>
   <p class="dec"><em>${n.dead?'버린 이유':'판단'}</em>${esc(n.dec)}</p>${n.left?`<p class="dec"><em>knot.에 남긴 것</em>${esc(n.left)}</p>`:''}${n.note?`<p class="note">대화 원문이 남아 있지 않아 기록을 요약함</p>`:''}</div>
   <div class="chat">${n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')}</div>`;
   sv.querySelectorAll('.node .hit').forEach(r=>r.setAttribute('stroke','none'));
   const h=sv.querySelector(`.node[data-id="${id}"] .hit`);h.setAttribute('stroke','var(--line)');}
 sv.addEventListener('click',ev=>{const t=ev.target.closest('.node');if(t)show(t.dataset.id)});
 sv.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){const t=ev.target.closest('.node');if(t){ev.preventDefault();show(t.dataset.id)}}});
+
+const ul=document.getElementById('chats');
+ul.innerHTML=CHATS.map(c=>{const k=N.filter(n=>n.s===c.id);return `<li><button data-c="${c.id}">${c.t}<small>노드 ${k.length}개${k[0]&&k.find(n=>n.date)?', '+k.find(n=>n.date).date+'부터':''}</small></button></li>`}).join('');
+function focusChat(cid){
+  ul.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===cid));
+  sv.querySelectorAll('.node,.edge').forEach(el=>el.classList.toggle('dim',!!cid&&el.dataset.s!==cid));
+  if(cid){const xs=N.filter(n=>n.s===cid).map(X);const w=document.querySelector('.mapwrap');const left=Math.min(...xs)-60,right=Math.max(...xs)+220;if(left<w.scrollLeft||right>w.scrollLeft+w.clientWidth)w.scrollTo({left:Math.max(0,left),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}
+function showChat(cid){const c=CHATS.find(x=>x.id===cid),ns=N.filter(n=>n.s===cid);focusChat(cid);
+  det.innerHTML=`<div class="chathead"><h2>${esc(c.t)}</h2><span class="note">이 채팅에서 나온 갈래 ${ns.filter(n=>n.dead).length}개, 이어진 판단 ${ns.filter(n=>!n.dead).length}개</span></div>
+  <div class="meta"><p class="dec"><em>노드를 누르면 그 부분만 볼 수 있음</em></p></div>
+  <div class="chat">${ns.map(n=>`<div class="sep">${esc(n.title)}${n.dead?' (버림)':''}</div>`+n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')).join('')}</div>`;}
+ul.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11');}else showChat(b.dataset.c);});
 show('t11');
 </script>
 </body>
