@@ -257,7 +257,7 @@ function showChat(cid){const c=CHATS.find(x=>x.id===cid),ns=N.filter(n=>n.s===ci
   det.innerHTML=`<div class="chathead"><h2>${esc(c.t)}</h2><span class="note">이 채팅에서 나온 갈래 ${ns.filter(n=>n.dead).length}개, 이어진 판단 ${ns.filter(n=>!n.dead).length}개</span></div>
   <div class="meta"><p class="dec"><em>노드를 누르면 그 부분만 볼 수 있음</em></p></div>
   <div class="chat">${ns.map(n=>`<div class="sep">${esc(n.title)}${n.dead?' (버림)':''}</div>`+n.chat.map(([w,t])=>w==='n'?`<p class="note">${esc(t)}</p>`:`<div class="b ${w}">${esc(t)}</div>`).join('')).join('')}</div>`;}
-const onSide=ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);show('t11',true);setZ(ZMIN());wrapEl.scrollTo({left:0,top:0});}else showChat(b.dataset.c);};ul.addEventListener('click',onSide);ul2.addEventListener('click',onSide);
+const onSide=ev=>{const b=ev.target.closest('button');if(!b)return;if(b.classList.contains('on')){focusChat(null);}else showChat(b.dataset.c);};ul.addEventListener('click',onSide);ul2.addEventListener('click',onSide);
 show('t11');focusChat(null);
 </script>
 </body>
